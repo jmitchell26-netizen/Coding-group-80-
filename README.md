@@ -9,7 +9,7 @@ A modern, responsive web application that categorizes NHL players into 5 tiers b
 - **5-Tier System**: Players are automatically categorized into tiers based on current season points
 - **Interactive Player Cards**: Click on any player's name to view detailed career statistics
 - **Modern Design**: Clean, responsive interface with no purple colors as requested
-- **Real-time Data**: Fetches live player data from the official NHL Stats API
+- **Real-time Data**: Fetches live player data from the official NHL API (api-web.nhle.com)
 - **Player Photos**: Displays player headshots with fallback placeholders
 
 ### Tier Categories
@@ -35,7 +35,7 @@ All tiers are organized by **points per season**:
 - **HTML5**: Semantic structure with accessibility features
 - **CSS3**: Modern styling with flexbox/grid layouts and smooth animations
 - **JavaScript ES6+**: Class-based architecture with async/await
-- **NHL Stats API**: Official NHL API for player statistics
+- **NHL Official API**: Uses api-web.nhle.com for comprehensive player statistics
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 
 ### File Structure

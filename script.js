@@ -32,90 +32,93 @@ class NHLPlayerTiers {
         const seasonId = `${currentSeason}${currentSeason + 1}`;
         
         try {
-            // Fetch current season stats for all players
-            const currentSeasonStatsResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/stats/leaders?season=${seasonId}&leaderCategories=points&limit=500`);
-            const currentSeasonData = await currentSeasonStatsResponse.json();
+            // First, get all team IDs from the NHL API
+            const teamsResponse = await fetch('https://api-web.nhle.com/v1/teams');
+            const teamsData = await teamsResponse.json();
             
-            // Create a map of player IDs to their current season points
-            const currentSeasonPointsMap = new Map();
-            if (currentSeasonData.data && currentSeasonData.data[0] && currentSeasonData.data[0].leaders) {
-                currentSeasonData.data[0].leaders.forEach(leader => {
-                    currentSeasonPointsMap.set(leader.person.id, leader.value);
-                });
+            if (!teamsData || !teamsData.data) {
+                throw new Error('Failed to fetch teams data');
             }
             
-            // Fetch current season player stats
-            const statsResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/teams?expand=team.roster`);
-            const teamsData = await statsResponse.json();
-            
-            // Collect all players
             const allPlayers = [];
             
-            for (const team of teamsData.teams) {
-                if (team.roster && team.roster.roster) {
-                    for (const rosterPlayer of team.roster.roster) {
-                        const player = rosterPlayer.person;
-                        
-                        // Get current season points for this player
-                        const currentSeasonPoints = currentSeasonPointsMap.get(player.id) || 0;
-                        
-                        // Fetch detailed player stats
-                        try {
-                            const playerStatsResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/people/${player.id}/stats?stats=careerRegularSeason`);
-                            const playerStatsData = await playerStatsResponse.json();
-                            
-                            if (playerStatsData.stats && playerStatsData.stats[0] && playerStatsData.stats[0].splits) {
-                                const careerStats = playerStatsData.stats[0].splits[0].stat;
+            // Fetch roster and stats for each team
+            for (const team of teamsData.data) {
+                try {
+                    // Get team roster
+                    const rosterResponse = await fetch(`https://api-web.nhle.com/v1/roster/${team.id}`);
+                    const rosterData = await rosterResponse.json();
+                    
+                    if (rosterData && rosterData.data) {
+                        for (const player of rosterData.data) {
+                            try {
+                                // Get player stats for current season
+                                const playerStatsResponse = await fetch(`https://api-web.nhle.com/v1/player/${player.id}/stats`);
+                                const playerStatsData = await playerStatsResponse.json();
                                 
-                                // Generate mock salary data (in real app, you'd use a salary API)
-                                const mockSalary = this.generateMockSalary(player.position.name, careerStats);
-                                
-                                allPlayers.push({
-                                    id: player.id,
-                                    name: player.fullName,
-                                    position: player.position.name,
-                                    team: team.name,
-                                    age: this.calculateAge(player.birthDate),
-                                    photo: `https://cms.nhl.bamgrid.com/images/headshots/current/168x168/${player.id}.jpg`,
-                                    salary: mockSalary,
-                                    plusMinus: careerStats.plusMinus || 0,
-                                    gamesPlayed: careerStats.games || 0,
-                                    goals: careerStats.goals || 0,
-                                    assists: careerStats.assists || 0,
-                                    points: careerStats.points || 0,
-                                    pim: careerStats.pim || 0,
-                                    hits: careerStats.hits || 0,
-                                    blocked: careerStats.blocked || 0,
-                                    takeaways: careerStats.takeaways || 0,
-                                    giveaways: careerStats.giveaways || 0,
-                                    currentSeasonPoints: currentSeasonPoints
-                                });
+                                if (playerStatsData && playerStatsData.data) {
+                                    // Find current season stats
+                                    let currentSeasonStats = null;
+                                    let currentSeasonPoints = 0;
+                                    
+                                    if (playerStatsData.data.seasons) {
+                                        const currentSeasonData = playerStatsData.data.seasons.find(season => 
+                                            season.seasonId === seasonId || season.seasonId === seasonId.toString()
+                                        );
+                                        
+                                        if (currentSeasonData && currentSeasonData.stat) {
+                                            currentSeasonStats = currentSeasonData.stat;
+                                            currentSeasonPoints = currentSeasonStats.points || 0;
+                                        }
+                                    }
+                                    
+                                    // Get career stats for additional data
+                                    const careerStats = playerStatsData.data.careerTotals || {};
+                                    
+                                    // Generate mock salary data
+                                    const mockSalary = this.generateMockSalary(player.position, careerStats);
+                                    
+                                    allPlayers.push({
+                                        id: player.id,
+                                        name: player.firstName.default + ' ' + player.lastName.default,
+                                        position: player.position || 'Unknown',
+                                        team: team.name.default,
+                                        age: this.calculateAge(player.birthDate),
+                                        photo: `https://cms.nhl.bamgrid.com/images/headshots/current/168x168/${player.id}.jpg`,
+                                        salary: mockSalary,
+                                        plusMinus: currentSeasonStats?.plusMinus || careerStats.plusMinus || 0,
+                                        gamesPlayed: currentSeasonStats?.gamesPlayed || careerStats.gamesPlayed || 0,
+                                        goals: currentSeasonStats?.goals || careerStats.goals || 0,
+                                        assists: currentSeasonStats?.assists || careerStats.assists || 0,
+                                        points: currentSeasonStats?.points || careerStats.points || 0,
+                                        pim: currentSeasonStats?.pim || careerStats.pim || 0,
+                                        hits: currentSeasonStats?.hits || careerStats.hits || 0,
+                                        blocked: currentSeasonStats?.blockedShots || careerStats.blockedShots || 0,
+                                        takeaways: currentSeasonStats?.takeaways || careerStats.takeaways || 0,
+                                        giveaways: currentSeasonStats?.giveaways || careerStats.giveaways || 0,
+                                        currentSeasonPoints: currentSeasonPoints
+                                    });
+                                }
+                            } catch (error) {
+                                console.warn(`Failed to fetch stats for player ${player.firstName?.default} ${player.lastName?.default}:`, error);
                             }
-                        } catch (error) {
-                            console.warn(`Failed to fetch stats for player ${player.fullName}:`, error);
                         }
                     }
+                } catch (error) {
+                    console.warn(`Failed to fetch roster for team ${team.name?.default}:`, error);
                 }
             }
             
             this.players = allPlayers;
-            console.log(`Loaded ${this.players.length} players`);
-            console.log(`Found ${currentSeasonPointsMap.size} players with current season stats`);
+            console.log(`Loaded ${this.players.length} players using NHL official API`);
             
         } catch (error) {
-            console.error('Error fetching player data:', error);
+            console.error('Error fetching player data from NHL API:', error);
             // Fallback to sample data if API fails
             this.players = this.getSamplePlayers();
         }
     }
 
-    getCurrentSeasonPoints(playerId, currentSeasonData) {
-        if (currentSeasonData.data && currentSeasonData.data[0] && currentSeasonData.data[0].leaders) {
-            const player = currentSeasonData.data[0].leaders.find(leader => leader.person.id === playerId);
-            return player ? player.value : 0;
-        }
-        return 0;
-    }
 
     generateMockSalary(position, stats) {
         // Generate realistic salary based on position and performance
@@ -167,7 +170,8 @@ class NHLPlayerTiers {
                 hits: 300,
                 blocked: 50,
                 takeaways: 200,
-                giveaways: 150
+                giveaways: 150,
+                currentSeasonPoints: 132
             },
             {
                 id: 2,
@@ -186,7 +190,8 @@ class NHLPlayerTiers {
                 hits: 250,
                 blocked: 40,
                 takeaways: 180,
-                giveaways: 120
+                giveaways: 120,
+                currentSeasonPoints: 106
             },
             {
                 id: 3,
@@ -205,7 +210,48 @@ class NHLPlayerTiers {
                 hits: 200,
                 blocked: 60,
                 takeaways: 220,
-                giveaways: 100
+                giveaways: 100,
+                currentSeasonPoints: 140
+            },
+            {
+                id: 4,
+                name: "Auston Matthews",
+                position: "Center",
+                team: "Toronto Maple Leafs",
+                age: 26,
+                photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8479318.jpg",
+                salary: 11625000,
+                plusMinus: 25,
+                gamesPlayed: 450,
+                goals: 250,
+                assists: 200,
+                points: 450,
+                pim: 60,
+                hits: 150,
+                blocked: 30,
+                takeaways: 150,
+                giveaways: 80,
+                currentSeasonPoints: 69
+            },
+            {
+                id: 5,
+                name: "Artemi Panarin",
+                position: "Left Wing",
+                team: "New York Rangers",
+                age: 32,
+                photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8478550.jpg",
+                salary: 11625000,
+                plusMinus: 30,
+                gamesPlayed: 480,
+                goals: 180,
+                assists: 280,
+                points: 460,
+                pim: 40,
+                hits: 100,
+                blocked: 20,
+                takeaways: 120,
+                giveaways: 90,
+                currentSeasonPoints: 71
             }
         ];
     }
