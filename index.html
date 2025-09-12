@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHL Player Tiers</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="title">NHL Player Tiers</h1>
+            <p class="subtitle">Categorized by Salary & Career Plus/Minus</p>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading NHL player data...</p>
+            </div>
+
+            <div class="tiers-container" id="tiersContainer" style="display: none;">
+                <!-- Tier 1: Elite -->
+                <section class="tier tier-1" id="tier1">
+                    <div class="tier-header">
+                        <h2 class="tier-title">Tier 1: Elite</h2>
+                        <p class="tier-description">High salary, high plus/minus</p>
+                    </div>
+                    <div class="players-grid" id="playersTier1"></div>
+                </section>
+
+                <!-- Tier 2: High Performers -->
+                <section class="tier tier-2" id="tier2">
+                    <div class="tier-header">
+                        <h2 class="tier-title">Tier 2: High Performers</h2>
+                        <p class="tier-description">High salary, moderate plus/minus</p>
+                    </div>
+                    <div class="players-grid" id="playersTier2"></div>
+                </section>
+
+                <!-- Tier 3: Solid Contributors -->
+                <section class="tier tier-3" id="tier3">
+                    <div class="tier-header">
+                        <h2 class="tier-title">Tier 3: Solid Contributors</h2>
+                        <p class="tier-description">Moderate salary, high plus/minus</p>
+                    </div>
+                    <div class="players-grid" id="playersTier3"></div>
+                </section>
+
+                <!-- Tier 4: Role Players -->
+                <section class="tier tier-4" id="tier4">
+                    <div class="tier-header">
+                        <h2 class="tier-title">Tier 4: Role Players</h2>
+                        <p class="tier-description">Moderate salary, moderate plus/minus</p>
+                    </div>
+                    <div class="players-grid" id="playersTier4"></div>
+                </section>
+
+                <!-- Tier 5: Developing Talent -->
+                <section class="tier tier-5" id="tier5">
+                    <div class="tier-header">
+                        <h2 class="tier-title">Tier 5: Developing Talent</h2>
+                        <p class="tier-description">Lower salary, developing plus/minus</p>
+                    </div>
+                    <div class="players-grid" id="playersTier5"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Player Stats Modal -->
+    <div class="modal" id="playerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalPlayerName">Player Name</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="player-info">
+                    <div class="player-photo-container">
+                        <img id="modalPlayerPhoto" src="" alt="Player Photo" class="player-photo-large">
+                    </div>
+                    <div class="player-details">
+                        <p><strong>Team:</strong> <span id="modalPlayerTeam">-</span></p>
+                        <p><strong>Position:</strong> <span id="modalPlayerPosition">-</span></p>
+                        <p><strong>Age:</strong> <span id="modalPlayerAge">-</span></p>
+                        <p><strong>Salary:</strong> <span id="modalPlayerSalary">-</span></p>
+                    </div>
+                </div>
+                <div class="stats-section">
+                    <h3>Career Statistics</h3>
+                    <div class="stats-grid" id="modalPlayerStats">
+                        <!-- Stats will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
