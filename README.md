@@ -14,11 +14,11 @@ A modern, responsive web application that categorizes NHL players into 5 tiers b
 
 ### Tier Categories
 
-1. **Tier 1: Elite** - High salary, high plus/minus
-2. **Tier 2: High Performers** - High salary, moderate plus/minus  
-3. **Tier 3: Solid Contributors** - Moderate salary, high plus/minus
-4. **Tier 4: Role Players** - Moderate salary, moderate plus/minus
-5. **Tier 5: Developing Talent** - Lower salary, developing plus/minus
+1. **Tier 1: Elite** - 80+ points this season (all current NHL players with 80+ points)
+2. **Tier 2: High Performers** - High salary, high plus/minus
+3. **Tier 3: Solid Contributors** - High salary, moderate plus/minus  
+4. **Tier 4: Role Players** - Moderate salary, high plus/minus
+5. **Tier 5: Developing Talent** - Moderate salary, moderate plus/minus
 
 ### How to Use
 
