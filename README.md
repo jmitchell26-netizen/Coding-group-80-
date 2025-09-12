@@ -2,11 +2,11 @@
 
 ## NHL Player Tiers Website
 
-A modern, responsive web application that categorizes NHL players into 5 tiers based on their salary and career plus/minus statistics.
+A modern, responsive web application that categorizes NHL players into 5 tiers based on their points per season performance.
 
 ### Features
 
-- **5-Tier System**: Players are automatically categorized into tiers based on salary and plus/minus performance
+- **5-Tier System**: Players are automatically categorized into tiers based on current season points
 - **Interactive Player Cards**: Click on any player's name to view detailed career statistics
 - **Modern Design**: Clean, responsive interface with no purple colors as requested
 - **Real-time Data**: Fetches live player data from the official NHL Stats API
@@ -14,11 +14,13 @@ A modern, responsive web application that categorizes NHL players into 5 tiers b
 
 ### Tier Categories
 
-1. **Tier 1: Elite** - 80+ points this season (all current NHL players with 80+ points)
-2. **Tier 2: High Performers** - High salary, high plus/minus
-3. **Tier 3: Solid Contributors** - High salary, moderate plus/minus  
-4. **Tier 4: Role Players** - Moderate salary, high plus/minus
-5. **Tier 5: Developing Talent** - Moderate salary, moderate plus/minus
+All tiers are organized by **points per season**:
+
+1. **Tier 1: Elite** - 80+ points this season
+2. **Tier 2: High Performers** - 60-79 points this season
+3. **Tier 3: Solid Contributors** - 40-59 points this season  
+4. **Tier 4: Role Players** - 20-39 points this season
+5. **Tier 5: Developing Talent** - 0-19 points this season
 
 ### How to Use
 

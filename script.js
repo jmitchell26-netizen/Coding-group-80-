@@ -3,15 +3,12 @@ class NHLPlayerTiers {
     constructor() {
         this.players = [];
         this.tierThresholds = {
-            salary: {
-                high: 8000000,    // $8M+
-                moderate: 4000000, // $4M - $8M
-                low: 2000000      // $2M - $4M
-            },
-            plusMinus: {
-                high: 20,         // +20 or better
-                moderate: 5,      // +5 to +19
-                low: -5           // -5 to +4
+            points: {
+                elite: 80,        // 80+ points - Tier 1 Elite
+                high: 60,         // 60-79 points - Tier 2 High Performers
+                moderate: 40,     // 40-59 points - Tier 3 Solid Contributors
+                role: 20,         // 20-39 points - Tier 4 Role Players
+                developing: 0     // 0-19 points - Tier 5 Developing Talent
             }
         };
         this.init();
@@ -31,24 +28,19 @@ class NHLPlayerTiers {
     }
 
     async loadPlayers() {
-        // Since NHL Stats API doesn't provide salary data, we'll use a combination
-        // of the official NHL API for stats and mock salary data for demonstration
         const currentSeason = new Date().getFullYear();
         const seasonId = `${currentSeason}${currentSeason + 1}`;
         
         try {
-            // First, fetch current season point leaders to identify 80+ point players
-            const leadersResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/statTypes`);
-            const currentSeasonStatsResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/stats/leaders?season=${seasonId}&leaderCategories=points&limit=100`);
+            // Fetch current season stats for all players
+            const currentSeasonStatsResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/stats/leaders?season=${seasonId}&leaderCategories=points&limit=500`);
             const currentSeasonData = await currentSeasonStatsResponse.json();
             
-            // Create a set of player IDs who have 80+ points this season
-            const elitePlayerIds = new Set();
+            // Create a map of player IDs to their current season points
+            const currentSeasonPointsMap = new Map();
             if (currentSeasonData.data && currentSeasonData.data[0] && currentSeasonData.data[0].leaders) {
                 currentSeasonData.data[0].leaders.forEach(leader => {
-                    if (leader.value >= 80) {
-                        elitePlayerIds.add(leader.person.id);
-                    }
+                    currentSeasonPointsMap.set(leader.person.id, leader.value);
                 });
             }
             
@@ -64,6 +56,9 @@ class NHLPlayerTiers {
                     for (const rosterPlayer of team.roster.roster) {
                         const player = rosterPlayer.person;
                         
+                        // Get current season points for this player
+                        const currentSeasonPoints = currentSeasonPointsMap.get(player.id) || 0;
+                        
                         // Fetch detailed player stats
                         try {
                             const playerStatsResponse = await fetch(`https://statsapi.web.nhl.com/api/v1/people/${player.id}/stats?stats=careerRegularSeason`);
@@ -74,9 +69,6 @@ class NHLPlayerTiers {
                                 
                                 // Generate mock salary data (in real app, you'd use a salary API)
                                 const mockSalary = this.generateMockSalary(player.position.name, careerStats);
-                                
-                                // Check if this player has 80+ points this season
-                                const isElitePoints = elitePlayerIds.has(player.id);
                                 
                                 allPlayers.push({
                                     id: player.id,
@@ -96,8 +88,7 @@ class NHLPlayerTiers {
                                     blocked: careerStats.blocked || 0,
                                     takeaways: careerStats.takeaways || 0,
                                     giveaways: careerStats.giveaways || 0,
-                                    isElitePoints: isElitePoints,
-                                    currentSeasonPoints: isElitePoints ? this.getCurrentSeasonPoints(player.id, currentSeasonData) : 0
+                                    currentSeasonPoints: currentSeasonPoints
                                 });
                             }
                         } catch (error) {
@@ -109,7 +100,7 @@ class NHLPlayerTiers {
             
             this.players = allPlayers;
             console.log(`Loaded ${this.players.length} players`);
-            console.log(`Found ${elitePlayerIds.size} players with 80+ points this season`);
+            console.log(`Found ${currentSeasonPointsMap.size} players with current season stats`);
             
         } catch (error) {
             console.error('Error fetching player data:', error);
@@ -221,41 +212,29 @@ class NHLPlayerTiers {
 
     categorizePlayers() {
         this.players.forEach(player => {
-            // Priority 1: Players with 80+ points this season go to Tier 1 Elite
-            if (player.isElitePoints && player.currentSeasonPoints >= 80) {
-                player.tier = 1; // Elite - 80+ points this season
-                return;
-            }
+            const points = player.currentSeasonPoints;
             
-            // For all other players, use the original salary + plus/minus logic
-            const salaryTier = this.getSalaryTier(player.salary);
-            const plusMinusTier = this.getPlusMinusTier(player.plusMinus);
-            
-            // Determine final tier based on combination
-            if (salaryTier === 'high' && plusMinusTier === 'high') {
-                player.tier = 2; // High Performers (moved down since Tier 1 is now 80+ points)
-            } else if (salaryTier === 'high' && plusMinusTier === 'moderate') {
-                player.tier = 2; // High Performers
-            } else if (salaryTier === 'moderate' && plusMinusTier === 'high') {
-                player.tier = 3; // Solid Contributors
-            } else if (salaryTier === 'moderate' && plusMinusTier === 'moderate') {
-                player.tier = 4; // Role Players
+            // Categorize based on current season points
+            if (points >= this.tierThresholds.points.elite) {
+                player.tier = 1; // Elite - 80+ points
+            } else if (points >= this.tierThresholds.points.high) {
+                player.tier = 2; // High Performers - 60-79 points
+            } else if (points >= this.tierThresholds.points.moderate) {
+                player.tier = 3; // Solid Contributors - 40-59 points
+            } else if (points >= this.tierThresholds.points.role) {
+                player.tier = 4; // Role Players - 20-39 points
             } else {
-                player.tier = 5; // Developing Talent
+                player.tier = 5; // Developing Talent - 0-19 points
             }
         });
     }
 
-    getSalaryTier(salary) {
-        if (salary >= this.tierThresholds.salary.high) return 'high';
-        if (salary >= this.tierThresholds.salary.moderate) return 'moderate';
-        return 'low';
-    }
-
-    getPlusMinusTier(plusMinus) {
-        if (plusMinus >= this.tierThresholds.plusMinus.high) return 'high';
-        if (plusMinus >= this.tierThresholds.plusMinus.moderate) return 'moderate';
-        return 'low';
+    getPointsTier(points) {
+        if (points >= this.tierThresholds.points.elite) return 'elite';
+        if (points >= this.tierThresholds.points.high) return 'high';
+        if (points >= this.tierThresholds.points.moderate) return 'moderate';
+        if (points >= this.tierThresholds.points.role) return 'role';
+        return 'developing';
     }
 
     renderPlayers() {
@@ -270,22 +249,15 @@ class NHLPlayerTiers {
     }
 
     createPlayerCard(player) {
-        const plusMinusClass = player.plusMinus >= 0 ? 'positive' : 'negative';
-        const plusMinusSign = player.plusMinus >= 0 ? '+' : '';
-        
-        // For Tier 1 players, show current season points instead of plus/minus
-        const displayInfo = player.tier === 1 && player.currentSeasonPoints > 0 
-            ? `<div class="player-salary">$${(player.salary / 1000000).toFixed(1)}M</div>
-               <div class="player-plus-minus positive">${player.currentSeasonPoints} pts</div>`
-            : `<div class="player-salary">$${(player.salary / 1000000).toFixed(1)}M</div>
-               <div class="player-plus-minus ${plusMinusClass}">${plusMinusSign}${player.plusMinus}</div>`;
+        const pointsClass = player.currentSeasonPoints >= 40 ? 'positive' : 'negative';
         
         return `
             <div class="player-card" onclick="nhlApp.showPlayerModal(${player.id})">
                 <img src="${player.photo}" alt="${player.name}" class="player-photo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRTVFN0VCIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjIwIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PC90ZXh0Pgo8L3N2Zz4K'">
                 <h3 class="player-name">${player.name}</h3>
                 <div class="player-info">
-                    ${displayInfo}
+                    <div class="player-salary">$${(player.salary / 1000000).toFixed(1)}M</div>
+                    <div class="player-plus-minus ${pointsClass}">${player.currentSeasonPoints} pts</div>
                 </div>
             </div>
         `;
@@ -321,8 +293,8 @@ class NHLPlayerTiers {
             { label: 'Giveaways', value: player.giveaways }
         ];
 
-        // Add current season points for Tier 1 players
-        if (player.tier === 1 && player.currentSeasonPoints > 0) {
+        // Add current season points for all players
+        if (player.currentSeasonPoints > 0) {
             stats.unshift({ label: 'Current Season Points', value: player.currentSeasonPoints });
         }
 
