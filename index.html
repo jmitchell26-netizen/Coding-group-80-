@@ -22,6 +22,14 @@
                 <p>Loading NHL player data...</p>
             </div>
 
+            <div class="search-container" id="searchContainer" style="display: none;">
+                <div class="search-box">
+                    <input type="text" id="playerSearch" placeholder="Search for any NHL player..." class="search-input">
+                    <button id="clearSearch" class="clear-search-btn">Clear</button>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+
             <div class="tiers-container" id="tiersContainer" style="display: none;">
                 <!-- Tier 1: Elite -->
                 <section class="tier tier-1" id="tier1">

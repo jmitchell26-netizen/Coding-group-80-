@@ -27,6 +27,17 @@ class NHLPlayerTiers {
         }
     }
 
+    updateLoadingProgress(message) {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            const spinner = loadingElement.querySelector('.spinner');
+            const text = loadingElement.querySelector('p');
+            if (text) {
+                text.textContent = message;
+            }
+        }
+    }
+
     async loadPlayers() {
         const currentSeason = new Date().getFullYear();
         const seasonId = `${currentSeason}${currentSeason + 1}`;
@@ -41,16 +52,32 @@ class NHLPlayerTiers {
             }
             
             const allPlayers = [];
+            const playerIds = new Set(); // To avoid duplicates
+            
+            console.log(`Fetching players from ${teamsData.data.length} teams...`);
+            this.updateLoadingProgress(`Loading players from ${teamsData.data.length} NHL teams...`);
             
             // Fetch roster and stats for each team
-            for (const team of teamsData.data) {
+            for (let i = 0; i < teamsData.data.length; i++) {
+                const team = teamsData.data[i];
+                console.log(`Loading team ${i + 1}/${teamsData.data.length}: ${team.name?.default || 'Unknown'}`);
+                this.updateLoadingProgress(`Loading team ${i + 1}/${teamsData.data.length}: ${team.name?.default || 'Unknown'}`);
+                
                 try {
                     // Get team roster
                     const rosterResponse = await fetch(`https://api-web.nhle.com/v1/roster/${team.id}`);
                     const rosterData = await rosterResponse.json();
                     
                     if (rosterData && rosterData.data) {
+                        console.log(`Found ${rosterData.data.length} players in ${team.name?.default || 'Unknown'}`);
+                        
                         for (const player of rosterData.data) {
+                            // Skip if we've already processed this player
+                            if (playerIds.has(player.id)) {
+                                continue;
+                            }
+                            playerIds.add(player.id);
+                            
                             try {
                                 // Get player stats for current season
                                 const playerStatsResponse = await fetch(`https://api-web.nhle.com/v1/player/${player.id}/stats`);
@@ -78,11 +105,12 @@ class NHLPlayerTiers {
                                     // Generate mock salary data
                                     const mockSalary = this.generateMockSalary(player.position, careerStats);
                                     
-                                    allPlayers.push({
+                                    // Create player object with all available data
+                                    const playerObj = {
                                         id: player.id,
-                                        name: player.firstName.default + ' ' + player.lastName.default,
+                                        name: (player.firstName?.default || '') + ' ' + (player.lastName?.default || ''),
                                         position: player.position || 'Unknown',
-                                        team: team.name.default,
+                                        team: team.name?.default || 'Unknown',
                                         age: this.calculateAge(player.birthDate),
                                         photo: `https://cms.nhl.bamgrid.com/images/headshots/current/168x168/${player.id}.jpg`,
                                         salary: mockSalary,
@@ -97,10 +125,60 @@ class NHLPlayerTiers {
                                         takeaways: currentSeasonStats?.takeaways || careerStats.takeaways || 0,
                                         giveaways: currentSeasonStats?.giveaways || careerStats.giveaways || 0,
                                         currentSeasonPoints: currentSeasonPoints
-                                    });
+                                    };
+                                    
+                                    allPlayers.push(playerObj);
+                                } else {
+                                    // Even if no stats, still add the player with basic info
+                                    const playerObj = {
+                                        id: player.id,
+                                        name: (player.firstName?.default || '') + ' ' + (player.lastName?.default || ''),
+                                        position: player.position || 'Unknown',
+                                        team: team.name?.default || 'Unknown',
+                                        age: this.calculateAge(player.birthDate),
+                                        photo: `https://cms.nhl.bamgrid.com/images/headshots/current/168x168/${player.id}.jpg`,
+                                        salary: this.generateMockSalary(player.position, {}),
+                                        plusMinus: 0,
+                                        gamesPlayed: 0,
+                                        goals: 0,
+                                        assists: 0,
+                                        points: 0,
+                                        pim: 0,
+                                        hits: 0,
+                                        blocked: 0,
+                                        takeaways: 0,
+                                        giveaways: 0,
+                                        currentSeasonPoints: 0
+                                    };
+                                    
+                                    allPlayers.push(playerObj);
                                 }
                             } catch (error) {
                                 console.warn(`Failed to fetch stats for player ${player.firstName?.default} ${player.lastName?.default}:`, error);
+                                
+                                // Add player even without stats
+                                const playerObj = {
+                                    id: player.id,
+                                    name: (player.firstName?.default || '') + ' ' + (player.lastName?.default || ''),
+                                    position: player.position || 'Unknown',
+                                    team: team.name?.default || 'Unknown',
+                                    age: this.calculateAge(player.birthDate),
+                                    photo: `https://cms.nhl.bamgrid.com/images/headshots/current/168x168/${player.id}.jpg`,
+                                    salary: this.generateMockSalary(player.position, {}),
+                                    plusMinus: 0,
+                                    gamesPlayed: 0,
+                                    goals: 0,
+                                    assists: 0,
+                                    points: 0,
+                                    pim: 0,
+                                    hits: 0,
+                                    blocked: 0,
+                                    takeaways: 0,
+                                    giveaways: 0,
+                                    currentSeasonPoints: 0
+                                };
+                                
+                                allPlayers.push(playerObj);
                             }
                         }
                     }
@@ -110,7 +188,8 @@ class NHLPlayerTiers {
             }
             
             this.players = allPlayers;
-            console.log(`Loaded ${this.players.length} players using NHL official API`);
+            console.log(`Successfully loaded ${this.players.length} NHL players from all teams`);
+            this.updateLoadingProgress(`Successfully loaded ${this.players.length} NHL players! Categorizing into tiers...`);
             
         } catch (error) {
             console.error('Error fetching player data from NHL API:', error);
@@ -378,11 +457,64 @@ class NHLPlayerTiers {
                 this.hidePlayerModal();
             }
         });
+
+        // Search functionality
+        const searchInput = document.getElementById('playerSearch');
+        const clearSearchBtn = document.getElementById('clearSearch');
+        const searchContainer = document.getElementById('searchContainer');
+        const tiersContainer = document.getElementById('tiersContainer');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                this.handleSearch('');
+            });
+        }
+    }
+
+    handleSearch(query) {
+        const searchContainer = document.getElementById('searchContainer');
+        const tiersContainer = document.getElementById('tiersContainer');
+        const searchResults = document.getElementById('searchResults');
+
+        if (!query.trim()) {
+            // Show tiers, hide search results
+            searchContainer.style.display = 'none';
+            tiersContainer.style.display = 'flex';
+            return;
+        }
+
+        // Show search results, hide tiers
+        searchContainer.style.display = 'block';
+        tiersContainer.style.display = 'none';
+
+        // Filter players based on search query
+        const filteredPlayers = this.players.filter(player => 
+            player.name.toLowerCase().includes(query.toLowerCase()) ||
+            player.team.toLowerCase().includes(query.toLowerCase()) ||
+            player.position.toLowerCase().includes(query.toLowerCase())
+        );
+
+        // Display search results
+        if (searchResults) {
+            if (filteredPlayers.length === 0) {
+                searchResults.innerHTML = '<p style="text-align: center; color: #718096; padding: 2rem;">No players found matching your search.</p>';
+            } else {
+                searchResults.innerHTML = filteredPlayers.map(player => this.createPlayerCard(player)).join('');
+            }
+        }
     }
 
     hideLoading() {
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('tiersContainer').style.display = 'block';
+        document.getElementById('searchContainer').style.display = 'block';
+        document.getElementById('tiersContainer').style.display = 'flex';
     }
 
     showError(message) {
