@@ -215,6 +215,92 @@ class NHLPlayerTiers {
         return Math.round(positionBase * performanceMultiplier * randomFactor);
     }
 
+	// Formats NHL season string like 20232024 -> 2023-24
+	formatSeason(seasonStr) {
+		if (!seasonStr || String(seasonStr).length !== 8) return seasonStr || '-';
+		const start = String(seasonStr).slice(0, 4);
+		const endShort = String(seasonStr).slice(6);
+		return `${start}-${endShort}`;
+	}
+
+	// Adds ordinal suffix to numbers (1 -> 1st, 2 -> 2nd, 3 -> 3rd)
+	ordinal(n) {
+		const s = ["th", "st", "nd", "rd"], v = n % 100;
+		return n + (s[(v - 20) % 10] || s[v] || s[0]);
+	}
+
+	// Fetch and cache detailed info for players with NHL IDs
+	async enrichPlayerDetails(player) {
+		const id = String(player.id || '');
+		if (!/^\d+$/.test(id)) {
+			// No NHL id available
+			player.detailsLoaded = true;
+			return;
+		}
+		if (player.detailsLoaded) return;
+		try {
+			// Fetch person info
+			const infoResp = await fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}`);
+			const infoJson = await infoResp.json();
+			const person = (infoJson && infoJson.people && infoJson.people[0]) || {};
+
+			player.nationality = person.nationality || person.birthCountry || player.nationality || '-';
+			player.height = person.height || player.height || null; // e.g., 6' 2"
+			player.weight = person.weight ? `${person.weight} lb` : (player.weight || null);
+			const draftYear = person.draftYear;
+			const draftRound = person.draftRound ? parseInt(person.draftRound, 10) : null;
+			const draftOverall = person.draftOverall ? parseInt(person.draftOverall, 10) : null;
+			const draftTeam = person.draftTeam && (person.draftTeam.name || person.draftTeam.triCode);
+			if (draftYear) {
+				const roundTxt = draftRound ? this.ordinal(draftRound) : null;
+				const pickTxt = draftOverall ? this.ordinal(draftOverall) : null;
+				player.draft = `${draftYear} Draft${roundTxt ? `, ${roundTxt} round` : ''}${pickTxt ? `, ${pickTxt} overall` : ''}${draftTeam ? ` (${draftTeam})` : ''}`;
+			}
+
+			// Fetch year-by-year stats
+			const statsResp = await fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=yearByYear`);
+			const statsJson = await statsResp.json();
+			const splits = (statsJson && statsJson.stats && statsJson.stats[0] && statsJson.stats[0].splits) || [];
+			const nhlSplits = splits.filter(s => s.league && (s.league.abbreviation === 'NHL' || s.league.name === 'National Hockey League'));
+			player.seasons = nhlSplits.map(s => ({
+				year: this.formatSeason(s.season),
+				team: (s.team && s.team.name) || '-',
+				gp: (s.stat && s.stat.games) || 0,
+				g: (s.stat && s.stat.goals) || 0,
+				a: (s.stat && s.stat.assists) || 0,
+				p: (s.stat && s.stat.points) || 0,
+				plusMinus: (s.stat && (s.stat.plusMinus ?? '-')),
+				pim: (s.stat && s.stat.pim) || 0,
+				ppg: (s.stat && s.stat.powerPlayGoals) || 0,
+				shg: (s.stat && s.stat.shortHandedGoals) || 0,
+				gwg: (s.stat && s.stat.gameWinningGoals) || 0
+			}));
+
+			// Compute career totals from NHL splits
+			if (player.seasons && player.seasons.length) {
+				const totals = player.seasons.reduce((acc, s) => {
+					acc.games += s.gp || 0;
+					acc.goals += s.g || 0;
+					acc.assists += s.a || 0;
+					acc.points += s.p || 0;
+					acc.plusMinus += (typeof s.plusMinus === 'number' ? s.plusMinus : 0);
+					acc.pim += s.pim || 0;
+					acc.hits += 0;
+					acc.blocked += 0;
+					acc.takeaways += 0;
+					acc.giveaways += 0;
+					return acc;
+				}, { games: 0, goals: 0, assists: 0, points: 0, plusMinus: 0, pim: 0, hits: 0, blocked: 0, takeaways: 0, giveaways: 0 });
+				player.career = totals;
+			}
+		} catch (e) {
+			// Swallow errors silently; keep fallbacks
+			console.warn('Failed to enrich player details', player.name, e);
+		} finally {
+			player.detailsLoaded = true;
+		}
+	}
+
     // Calculates a player's age based on their birth date
     calculateAge(birthDate) {
         const today = new Date();
@@ -373,7 +459,7 @@ class NHLPlayerTiers {
         const pointsClass = player.currentSeasonPoints >= 40 ? 'positive' : 'negative';
 
         return `
-            <div class="player-card" onclick="nhlApp.showPlayerModal(${player.id})">
+            <div class="player-card" data-player-id="${player.id}">
                 <img src="${player.photo}" alt="${player.name}" class="player-photo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRTVFN0VCIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjIwIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PC90ZXh0Pgo8L3N2Zz4K'">
                 <h3 class="player-name">${player.name}</h3>
                 <div class="player-info">
@@ -384,12 +470,17 @@ class NHLPlayerTiers {
         `;
     }
 
-    // Displays the player modal with detailed player information
-    showPlayerModal(playerId) {
+	// Displays the player modal with detailed player information
+	async showPlayerModal(playerId) {
         const player = this.players.find(p => p.id === playerId);
         if (!player) return;
 
-        // Populate modal with player data
+		// Enrich player details (fetch NHL info if available)
+		try {
+			await this.enrichPlayerDetails(player);
+		} catch (_) {}
+
+        // Populate basic info
         document.getElementById('modalPlayerName').textContent = player.name;
         document.getElementById('modalPlayerPhoto').src = player.photo;
         document.getElementById('modalPlayerPhoto').onerror = function() {
@@ -400,9 +491,21 @@ class NHLPlayerTiers {
         document.getElementById('modalPlayerAge').textContent = player.age;
         document.getElementById('modalPlayerSalary').textContent = `$${(player.salary / 1000000).toFixed(1)}M`;
 
-        // Populate stats
-        const statsContainer = document.getElementById('modalPlayerStats');
-        const stats = [{
+		// Additional player details
+		const playerDetails = {
+			'Draft': this.getPlayerDraft(player),
+			'Nationality': this.getPlayerNationality(player),
+			'Height': this.getPlayerHeight(player),
+			'Weight': this.getPlayerWeight(player)
+		};
+
+        Object.entries(playerDetails).forEach(([key, value]) => {
+            const element = document.getElementById(`modalPlayer${key}`);
+            if (element) element.textContent = value;
+        });
+
+        // Current Season Stats
+        const currentSeasonStats = [{
             label: 'Games Played',
             value: player.gamesPlayed
         }, {
@@ -413,44 +516,146 @@ class NHLPlayerTiers {
             value: player.assists
         }, {
             label: 'Points',
-            value: player.points
+            value: player.currentSeasonPoints
         }, {
             label: 'Plus/Minus',
             value: player.plusMinus
-        }, {
-            label: 'PIM',
-            value: player.pim
-        }, {
-            label: 'Hits',
-            value: player.hits
-        }, {
-            label: 'Blocked Shots',
-            value: player.blocked
-        }, {
-            label: 'Takeaways',
-            value: player.takeaways
-        }, {
-            label: 'Giveaways',
-            value: player.giveaways
         }];
 
-        // Add current season points for all players
-        if (player.currentSeasonPoints > 0) {
-            stats.unshift({
-                label: 'Current Season Points',
-                value: player.currentSeasonPoints
-            });
-        }
-
-        statsContainer.innerHTML = stats.map(stat => `
+        document.getElementById('modalCurrentSeasonStats').innerHTML = currentSeasonStats.map(stat => `
             <div class="stat-item">
                 <span class="stat-value">${stat.value}</span>
                 <span class="stat-label">${stat.label}</span>
             </div>
         `).join('');
 
+		// Career Stats (use enriched if available)
+		const careerStats = [{
+			label: 'Career Games',
+			value: (player.career && player.career.games) || player.gamesPlayed
+		}, {
+			label: 'Career Goals',
+			value: (player.career && player.career.goals) || player.goals
+		}, {
+			label: 'Career Assists',
+			value: (player.career && player.career.assists) || player.assists
+		}, {
+			label: 'Career Points',
+			value: (player.career && player.career.points) || player.points
+		}, {
+			label: 'Career Plus/Minus',
+			value: (player.career && player.career.plusMinus) || player.plusMinus
+		}, {
+			label: 'PIM',
+			value: (player.career && player.career.pim) || player.pim
+		}, {
+			label: 'Hits',
+			value: (player.career && player.career.hits) || player.hits
+		}, {
+			label: 'Blocked Shots',
+			value: (player.career && player.career.blocked) || player.blocked
+		}, {
+			label: 'Takeaways',
+			value: (player.career && player.career.takeaways) || player.takeaways
+		}, {
+			label: 'Giveaways',
+			value: (player.career && player.career.giveaways) || player.giveaways
+		}];
+
+        document.getElementById('modalPlayerStats').innerHTML = careerStats.map(stat => `
+            <div class="stat-item">
+                <span class="stat-value">${stat.value}</span>
+                <span class="stat-label">${stat.label}</span>
+            </div>
+        `).join('');
+
+        // Career Milestones
+        const milestones = this.getPlayerMilestones(player);
+        document.getElementById('modalPlayerMilestones').innerHTML = milestones.map(milestone => `
+            <div class="milestone-item">
+                <div class="milestone-date">${milestone.date}</div>
+                <div class="milestone-description">${milestone.description}</div>
+            </div>
+        `).join('');
+
+        // Awards & Achievements
+        const awards = this.getPlayerAwards(player);
+        document.getElementById('modalPlayerAwards').innerHTML = awards.map(award => `
+            <div class="award-item">
+                <div class="award-year">${award.year}</div>
+                <div class="award-name">${award.name}</div>
+            </div>
+        `).join('');
+
+		// Season by Season
+		const seasons = this.getPlayerSeasons(player);
+        document.getElementById('modalPlayerSeasons').querySelector('tbody').innerHTML = seasons.map(season => `
+            <tr>
+                <td>${season.year}</td>
+                <td>${season.team}</td>
+                <td>${season.gp}</td>
+                <td>${season.g}</td>
+                <td>${season.a}</td>
+                <td>${season.p}</td>
+                <td>${season.plusMinus}</td>
+                <td>${season.pim}</td>
+                <td>${season.ppg}</td>
+                <td>${season.shg}</td>
+                <td>${season.gwg}</td>
+            </tr>
+        `).join('');
+
         // Show modal
         document.getElementById('playerModal').style.display = 'block';
+    }
+
+    // Helper methods for player data
+    getPlayerDraft(player) {
+        if (player.draft) return player.draft;
+        return '-';
+    }
+
+    getPlayerNationality(player) {
+        return player.nationality || '-';
+    }
+
+    getPlayerHeight(player) {
+        return player.height || '-';
+    }
+
+    getPlayerWeight(player) {
+        return player.weight || '-';
+    }
+
+    getPlayerMilestones(player) {
+        // Example milestones - in a real app, this would come from API data
+        return [{
+            date: '2023-24 Season',
+            description: `Reached ${player.currentSeasonPoints} points`
+        }];
+    }
+
+    getPlayerAwards(player) {
+        // Example awards - in a real app, this would come from API data
+        return [];
+    }
+
+    getPlayerSeasons(player) {
+        if (player.seasons && player.seasons.length) return player.seasons;
+        // fallback to a single-line summary if no seasons available
+        return [{
+            year: 'Career',
+            team: player.team,
+            gp: player.gamesPlayed,
+            g: player.goals,
+            a: player.assists,
+            p: player.points,
+            plusMinus: player.plusMinus,
+            pim: player.pim || 0,
+            ppg: 0,
+            shg: 0,
+            gwg: 0
+        }];
     }
 
     // Hides the player modal
@@ -476,6 +681,17 @@ class NHLPlayerTiers {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.hidePlayerModal();
+            }
+        });
+
+        // Player card click handlers
+        document.addEventListener('click', (e) => {
+            const playerCard = e.target.closest('.player-card');
+            if (playerCard) {
+                const playerId = playerCard.dataset.playerId;
+                if (playerId) {
+                    this.showPlayerModal(playerId);
+                }
             }
         });
 
@@ -553,14 +769,7 @@ class NHLPlayerTiers {
 }
 
 // Initialize the application when DOM is loaded
-let nhlApp;
+window.nhlApp = null;
 document.addEventListener('DOMContentLoaded', () => {
-    nhlApp = new NHLPlayerTiers();
+    window.nhlApp = new NHLPlayerTiers();
 });
-
-// Make showPlayerModal globally accessible
-window.showPlayerModal = (playerId) => {
-    if (nhlApp) {
-        nhlApp.showPlayerModal(playerId);
-    }
-};

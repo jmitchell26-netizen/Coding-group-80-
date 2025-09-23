@@ -87,6 +87,7 @@
                 <span class="close" id="closeModal">&times;</span>
             </div>
             <div class="modal-body">
+                <!-- Basic Info Section -->
                 <div class="player-info">
                     <div class="player-photo-container">
                         <img id="modalPlayerPhoto" src="" alt="Player Photo" class="player-photo-large">
@@ -96,12 +97,69 @@
                         <p><strong>Position:</strong> <span id="modalPlayerPosition">-</span></p>
                         <p><strong>Age:</strong> <span id="modalPlayerAge">-</span></p>
                         <p><strong>Salary:</strong> <span id="modalPlayerSalary">-</span></p>
+                        <p><strong>Draft:</strong> <span id="modalPlayerDraft">-</span></p>
+                        <p><strong>Nationality:</strong> <span id="modalPlayerNationality">-</span></p>
+                        <p><strong>Height:</strong> <span id="modalPlayerHeight">-</span></p>
+                        <p><strong>Weight:</strong> <span id="modalPlayerWeight">-</span></p>
                     </div>
                 </div>
+
+                <!-- Current Season Stats -->
+                <div class="stats-section">
+                    <h3>Current Season Statistics</h3>
+                    <div class="stats-grid" id="modalCurrentSeasonStats">
+                        <!-- Current season stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Career Stats -->
                 <div class="stats-section">
                     <h3>Career Statistics</h3>
                     <div class="stats-grid" id="modalPlayerStats">
-                        <!-- Stats will be populated here -->
+                        <!-- Career stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Career Milestones -->
+                <div class="milestones-section">
+                    <h3>Career Highlights & Milestones</h3>
+                    <div class="milestones-grid" id="modalPlayerMilestones">
+                        <!-- Milestones will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Awards & Achievements -->
+                <div class="awards-section">
+                    <h3>Awards & Achievements</h3>
+                    <div class="awards-grid" id="modalPlayerAwards">
+                        <!-- Awards will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Season by Season -->
+                <div class="seasons-section">
+                    <h3>Season by Season</h3>
+                    <div class="seasons-table-container">
+                        <table class="seasons-table" id="modalPlayerSeasons">
+                            <thead>
+                                <tr>
+                                    <th>Season</th>
+                                    <th>Team</th>
+                                    <th>GP</th>
+                                    <th>G</th>
+                                    <th>A</th>
+                                    <th>P</th>
+                                    <th>+/-</th>
+                                    <th>PIM</th>
+                                    <th>PPG</th>
+                                    <th>SHG</th>
+                                    <th>GWG</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Season data will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
