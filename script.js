@@ -52,10 +52,8 @@ class NHLPlayerTiers {
 
     // Asynchronously loads player data from a CSV source
     async loadPlayers() {
-        // Use provided CSV data instead of API
         try {
-            this.updateLoadingProgress('Loading players from provided dataset...');
-
+            this.updateLoadingProgress('Loading players from dataset...');
 
             const csv = `Rank,Name,Team,Position,GP,G,A,Pts,PlusMinus\n1,Nikita Kucherov,TBL,RW,78,37,84,121,22\n2,Nathan MacKinnon,COL,C/RW,79,32,84,116,25\n3,Leon Draisaitl,EDM,C/W,71,52,54,106,32\n4,David Pastrnak,BOS,RW/LW,82,43,63,106,0\n5,Mitchell Marner,TOR,RW/C,81,27,75,102,18\n6,Connor McDavid,EDM,C/LW,67,26,74,100,20\n7,Kyle Connor,WPG,LW,82,41,56,97,17\n8,Jack Eichel,VGK,C,77,28,66,94,32\n9,Cale Makar,COL,D,80,30,62,92,28\n10,Sidney Crosby,PIT,C,80,33,58,91,-20\n11,Brandon Hagel,TBL,LW,82,35,55,90,33\n12,Clayton Keller,UTA,RW/LW,81,30,60,90,-12\n13,Artemi Panarin,NYR,LW,80,37,52,89,-9\n14,Nick Suzuki,MTL,C,82,30,59,89,19\n15,Mikko Rantanen,DAL/W,C,82,32,56,88,13\n16,Jesper Bratt,NJD,LW/RW,81,21,67,88,5\n17,Mark Scheifele,WPG,C,82,39,48,87,12\n18,William Nylander,TOR,W/C,82,45,39,84,10\n19,Martin Nečas,C/RW,79,27,56,83,5\n20,Brayden Point,TBL,C,77,42,40,82,17\n21,Matt Duchene,DAL,C/W,82,30,52,82,13\n22,Dylan Strome,WAS,C,82,29,53,82,2\n23,Zach Werenski,CBJ,D,81,23,59,82,12\n24,Sam Reinhart,FLA,C/RW,79,39,42,81,6\n25,Robert Thomas,STL,C/RW,70,21,60,81,20\n26,Jake Guentzel,TBL,LW,80,41,39,80,18\n27,Jason Robertson,DAL/LW/RW,82,35,45,80,10\n28,Lucas Raymond,DET/LW/RW,82,27,53,80,-15\n29,Tim Stützle,OTT,LW/C,82,24,55,79,0\n30,Auston Matthews,TOR,C/LW,67,33,45,78,11\n31,Filip Forsberg,NSH,W/C,82,31,45,76,-27\n32,Travis Konecny,PHI,RW/LW,82,24,52,76,-17\n33,Quinn Hughes,VAN,D,68,16,60,76,2\n34,John Tavares,TOR,C/LW,75,38,36,74,10\n35,Kirill Marchenko,CBJ,RW/LW,79,31,43,74,29\n36,Sebastian Aho, CAR,C/W,79,29,45,74,7\n37,Alexander Ovechkin, WSH, LW,65,44,29,73,15\n38,Adrian Kempe, LAK, W/C,81,35,38,73,22\n39,Matt Boldy, MIN, LW/RW,82,27,46,73,1\n40,Tage Thompson, BUF, C/W,76,44,28,72,-2\n41,Pierre-Luc Dubois, WSH, C/LW,82,20,46,66,27\n42,Victor Hedman, TBL, D,79,15,51,66,18\n43,Lane Hutson, MTL, D,82,6,60,66,-2\n44,Tom Wilson, WSH, RW,81,33,32,65,20\n45,Ryan Donato, CHI, C/W,80,31,31,62,-15\n46,Jonathan Huberdeau, CGY, LW/RW,81,28,34,62,-13\n47,Mika Zibanejad, NYR, C/RW,82,20,42,62,-22\n48,Josh Morrissey, WPG, D,80,14,48,62,17\n49,Mikael Backlund, CGY, C,82,22,39,61,4\n50,William Nylander,TOR,W/C, duplicate entry skip\n51,Andreas Athanasiou, COL, RW,81,25,34,59,5\n52,Anthony Mantha, SJS, LW,82,27,30,57,-5\n53,Jeff Skinner, WPG, LW,82,21,36,57,-16\n54,Charlie Coyle, VGK, C/LW,82,23,32,55,8\n55,Joel Eriksson Ek, MIN, C,82,26,28,54,-19\n56,Kevin Fiala, STL, RW/LW,82,24,30,54,-17\n57,Taylor Hall, CHI, LW/RW,81,23,30,53,0\n58,Steven Stamkos, NSH, C/LW,82,26,26,52,-14\n59,Nick Cousins, LAK, C,81,20,32,52,-7\n60,Tyler Bertuzzi, P/A, CHI/RW,82,29,22,51,5\n61,J.T. Miller, NYR, C/LW,82,24,26,50,-2\n62,Eeli Tolvanen, NSH, RW,82,22,28,50,0\n63,Nico Hischier, NJD, C,82,23,26,49,4\n64,Bo Horvat,VAN,C,82,19,30,49,-15\n65,Patrick Kane, CHI, RW,81,22,26,48,-5\n66,Brendan Gallagher, MTL, RW,82,18,29,47,-9\n67,Connor Brown, OTT,RW,82,18,29,47,-2\n68,Jordan Kyrou, STL,C/RW,82,21,26,47,-10\n69,Sean Monahan, CGY,C,82,19,27,46,-16\n70,Matty Beniers, SEA,C,82,18,28,46,-5\n71,Barclay Goodrow, VGK, C/LW,82,16,29,45,-7\n72,Jake DeBrusk, BOS, LW,82,22,22,44,0\n73,Anthony Duclair, NYI, LW,82,20,24,44,-8\n74,William Karlsson, VGK, C,82,19,24,43,1\n75,Evgeni Malkin, PIT, C,74,19,24,43,-7\n76,Jonas Brodin, MIN, D,80,5,38,43,6\n77,Brayden McNabb, VGK, D,74,6,37,43,42\n78,Joel Hanley, PIT, D,82,4,39,43,14\n79,Max Domi, TOR, C,82,17,25,42,3\n80,Mitchell Stephens, VGK, C,82,21,21,42,14\n81,Sammy Walker, WPG, LW,82,23,18,41,1\n82,Kaapo Kakko, NYR, LW,82,16,25,41,-7\n83,Radko Gudas, PHI, D,81,5,36,41,-16\n84,Connor Garland, VAN, LW/RW,82,19,22,41,-19\n85,Anthony Beauvillier, CGY, LW,82,18,22,40,-19\n86,Josh Anderson, MTL, LW/RW,82,19,20,39,-2\n87,Tyler Toffoli, SJS, RW,82,17,22,39,-2\n88,Andrei Svechnikov, CAR, RW,82,16,23,39,-28\n89,Nick Foligno, CBJ, LW,82,18,20,38,0\n90,Justin Schultz, PIT, D,82,7,30,37,6\n91,Tyson Jost, WPG, LW,82,13,23,36,3\n92,Adam Henrique, NJD, C/W,79,20,15,35,7\n93,Anthony Cirelli, TBL, C,82,10,25,35,6\n94,Boeser, Brock, VAN, LW,82,17,17,34,1\n95,Sam Lafferty, SEA, RW,82,16,18,34,0\n96,Andrew Mangiapane, CGY, LW,81,13,20,33,0\n97,Jordan Greenway, BUF, LW,82,18,15,33,-13\n98,Anthony Cirelli, duplicate skip\n99,Jack Roslovic, MTL, C/W,82,13,19,32,-6\n100,Michael Bunting, TOR, LW,82,15,17,32,0`;
 
@@ -64,17 +62,87 @@ class NHLPlayerTiers {
             const allPlayers = [];
             const seen = new Set(); // to skip duplicates (Name+Team)
 
+            // NHL player IDs mapping (add more as needed)
+            const playerIds = {
+                'Connor McDavid': '8478402',
+                'Leon Draisaitl': '8477934',
+                'Nathan MacKinnon': '8477492',
+                'Auston Matthews': '8479318',
+                'Artemi Panarin': '8478550',
+                'Nikita Kucherov': '8476453',
+                'David Pastrnak': '8477956',
+                'Mitchell Marner': '8478483',
+                'Jack Eichel': '8478403',
+                'Sidney Crosby': '8471675',
+                'Alexander Ovechkin': '8471214',
+                'Steven Stamkos': '8474564',
+                'Patrick Kane': '8474141',
+                'Evgeni Malkin': '8471215',
+                'William Nylander': '8477939',
+                'Cale Makar': '8480069',
+                'Quinn Hughes': '8480800',
+                'Tage Thompson': '8479420',
+                'Andrei Svechnikov': '8480830',
+                'Brock Boeser': '8478444',
+                'Kyle Connor': '8478398',
+                'Brandon Hagel': '8479542',
+                'Clayton Keller': '8479343',
+                'Nick Suzuki': '8480018',
+                'Mikko Rantanen': '8478420',
+                'Jesper Bratt': '8479407',
+                'Mark Scheifele': '8476460',
+                'Martin Necas': '8480039',
+                'Brayden Point': '8478010',
+                'Matt Duchene': '8475168',
+                'Dylan Strome': '8478440',
+                'Zach Werenski': '8478406',
+                'Sam Reinhart': '8477933',
+                'Robert Thomas': '8480023',
+                'Jake Guentzel': '8477404',
+                'Jason Robertson': '8480027',
+                'Lucas Raymond': '8482078',
+                'Tim Stutzle': '8482109',
+                'Filip Forsberg': '8476887',
+                'Travis Konecny': '8478439',
+                'John Tavares': '8475166',
+                'Kirill Marchenko': '8480893',
+                'Sebastian Aho': '8478427',
+                'Adrian Kempe': '8477960',
+                'Matt Boldy': '8481557',
+                'Pierre-Luc Dubois': '8479400',
+                'Victor Hedman': '8475167',
+                'Tom Wilson': '8476880',
+                'Jonathan Huberdeau': '8476456',
+                'Mika Zibanejad': '8476459',
+                'Josh Morrissey': '8477504',
+                'Mikael Backlund': '8474150',
+                'Kevin Fiala': '8477942',
+                'Taylor Hall': '8475791',
+                'Nico Hischier': '8480002',
+                'Bo Horvat': '8477500',
+                'Brendan Gallagher': '8475848',
+                'Jordan Kyrou': '8479385',
+                'Sean Monahan': '8477497',
+                'Matty Beniers': '8482666',
+                'Jake DeBrusk': '8478498',
+                'William Karlsson': '8476448',
+                'Jonas Brodin': '8476463',
+                'Brayden McNabb': '8475188',
+                'Max Domi': '8477503',
+                'Kaapo Kakko': '8481554',
+                'Radko Gudas': '8475462',
+                'Tyler Toffoli': '8475726'
+            };
+
             for (const rawLine of lines) {
-                // Strip any trailing annotations like ":contentReference..."
                 const line = rawLine.split(' :contentReference')[0].trim();
                 if (!line || /duplicate\s+entry\s+skip|duplicate\s+skip/i.test(line)) {
                     continue;
                 }
 
-                // Simple CSV split (no quoted fields present in provided data)
                 const parts = line.split(',').map(p => p.trim());
                 if (parts.length < 9) {
-                    continue; // malformed row
+                    continue;
                 }
 
                 const [rankStr, name, team, position, gpStr, gStr, aStr, ptsStr, plusMinusStr] = parts;
@@ -89,13 +157,19 @@ class NHLPlayerTiers {
                 const points = parseInt(ptsStr, 10) || 0;
                 const plusMinus = parseInt(plusMinusStr, 10) || 0;
 
+                // Generate a unique ID for players without a known NHL ID
+                const playerId = playerIds[name] || `custom${rank}`;
+                const photoUrl = playerIds[name] 
+                    ? `https://assets.nhle.com/mugs/nhl/latest/${playerIds[name]}.png`
+                    : `https://assets.nhle.com/mugs/nhl/latest/default.png`;
+
                 allPlayers.push({
-                    id: rank, // use rank as a stable id
+                    id: playerId,
                     name: name,
                     position: position,
                     team: team.replace(/\s+/g, ' ').trim(),
                     age: '-',
-                    photo: `https://cms.nhl.bamgrid.com/images/headshots/current/168x168/${rank}.jpg`, // will fallback to placeholder
+                    photo: photoUrl,
                     salary: this.generateMockSalary(position, {
                         points
                     }),
@@ -114,9 +188,10 @@ class NHLPlayerTiers {
             }
 
             this.players = allPlayers;
-            this.updateLoadingProgress(`Loaded ${this.players.length} players from provided dataset. Categorizing...`);
+            this.updateLoadingProgress(`Loaded ${this.players.length} players from dataset. Categorizing...`);
         } catch (error) {
-            console.error('Error loading players from provided dataset:', error);
+            console.error('Error loading players from NHL API:', error);
+            // Fallback to sample players if API fails
             this.players = this.getSamplePlayers();
         }
     }
@@ -157,12 +232,12 @@ class NHLPlayerTiers {
     getSamplePlayers() {
         // Sample data for demonstration when API is unavailable
         return [{
-            id: 1,
+            id: 8478402,  // Real NHL ID for Connor McDavid
             name: "Connor McDavid",
             position: "Center",
             team: "Edmonton Oilers",
             age: 27,
-            photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8478402.jpg",
+            photo: "https://assets.nhle.com/mugs/nhl/latest/8478402.png",
             salary: 12500000,
             plusMinus: 45,
             gamesPlayed: 500,
@@ -176,12 +251,12 @@ class NHLPlayerTiers {
             giveaways: 150,
             currentSeasonPoints: 132
         }, {
-            id: 2,
+            id: 8477934,  // Real NHL ID for Leon Draisaitl
             name: "Leon Draisaitl",
             position: "Center",
             team: "Edmonton Oilers",
             age: 28,
-            photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8477934.jpg",
+            photo: "https://assets.nhle.com/mugs/nhl/latest/8477934.png",
             salary: 8500000,
             plusMinus: 35,
             gamesPlayed: 480,
@@ -195,12 +270,12 @@ class NHLPlayerTiers {
             giveaways: 120,
             currentSeasonPoints: 106
         }, {
-            id: 3,
+            id: 8477492,  // Real NHL ID for Nathan MacKinnon
             name: "Nathan MacKinnon",
             position: "Center",
             team: "Colorado Avalanche",
             age: 28,
-            photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8477492.jpg",
+            photo: "https://assets.nhle.com/mugs/nhl/latest/8477492.png",
             salary: 12500000,
             plusMinus: 40,
             gamesPlayed: 520,
@@ -214,12 +289,12 @@ class NHLPlayerTiers {
             giveaways: 100,
             currentSeasonPoints: 140
         }, {
-            id: 4,
+            id: 8479318,  // Real NHL ID for Auston Matthews
             name: "Auston Matthews",
             position: "Center",
             team: "Toronto Maple Leafs",
             age: 26,
-            photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8479318.jpg",
+            photo: "https://assets.nhle.com/mugs/nhl/latest/8479318.png",
             salary: 11625000,
             plusMinus: 25,
             gamesPlayed: 450,
@@ -233,12 +308,12 @@ class NHLPlayerTiers {
             giveaways: 80,
             currentSeasonPoints: 69
         }, {
-            id: 5,
+            id: 8478550,  // Real NHL ID for Artemi Panarin
             name: "Artemi Panarin",
             position: "Left Wing",
             team: "New York Rangers",
             age: 32,
-            photo: "https://cms.nhl.bamgrid.com/images/headshots/current/168x168/8478550.jpg",
+            photo: "https://assets.nhle.com/mugs/nhl/latest/8478550.png",
             salary: 11625000,
             plusMinus: 30,
             gamesPlayed: 480,
