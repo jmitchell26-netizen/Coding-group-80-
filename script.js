@@ -449,13 +449,120 @@ class NHLPlayerTiers {
             </div>
         `).join('');
 
+        // Prepare Recent Seasons section states
+        const loadingEl = document.getElementById('recentSeasonsLoading');
+        const errorEl = document.getElementById('recentSeasonsError');
+        const seasonsEl = document.getElementById('recentSeasons');
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (errorEl) errorEl.style.display = 'none';
+        if (seasonsEl) seasonsEl.innerHTML = '';
+
         // Show modal
         document.getElementById('playerModal').style.display = 'block';
+
+        // Load recent NHL seasons asynchronously (ignore errors gracefully)
+        this.loadRecentSeasons(player).catch(() => {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'block';
+        });
     }
 
     // Hides the player modal
     hidePlayerModal() {
         document.getElementById('playerModal').style.display = 'none';
+    }
+
+    // Fetch and render last 5 NHL seasons for a player in the modal
+    async loadRecentSeasons(player) {
+        const loadingEl = document.getElementById('recentSeasonsLoading');
+        const errorEl = document.getElementById('recentSeasonsError');
+        const seasonsEl = document.getElementById('recentSeasons');
+
+        if (!seasonsEl || !loadingEl || !errorEl) {
+            return;
+        }
+
+        // If we have a synthetic/custom player without a real NHL ID, show a friendly message
+        if (String(player.id).startsWith('custom')) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'none';
+            seasonsEl.innerHTML = '<p style="color:#718096;">No NHL season history available for this player.</p>';
+            return;
+        }
+
+        try {
+            const seasons = await this.fetchPlayerYearByYearStats(player.id);
+            const nhlSeasons = seasons
+                .filter(s => (s.league && (s.league.name === 'National Hockey League' || s.league.id === 133)))
+                .slice(-5) // last 5 NHL seasons
+                .map(s => ({
+                    season: this.formatSeasonLabel(s.season),
+                    team: (s.team && (s.team.name || s.team.abbreviation)) || '-',
+                    gp: s.stat && (s.stat.games ?? '-') ,
+                    g: s.stat && (s.stat.goals ?? '-') ,
+                    a: s.stat && (s.stat.assists ?? '-') ,
+                    pts: s.stat && (s.stat.points ?? '-') ,
+                    plusMinus: s.stat && (s.stat.plusMinus ?? '-')
+                }));
+
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'none';
+
+            if (nhlSeasons.length === 0) {
+                seasonsEl.innerHTML = '<p style="color:#718096;">No recent NHL seasons found.</p>';
+                return;
+            }
+
+            seasonsEl.innerHTML = this.renderSeasonsTable(nhlSeasons);
+        } catch (e) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    // Call NHL API to get year-by-year stats for a player
+    async fetchPlayerYearByYearStats(playerId) {
+        const url = `https://statsapi.web.nhl.com/api/v1/people/${playerId}/stats?stats=yearByYear`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Failed to fetch year-by-year stats');
+        const data = await resp.json();
+        const stats = (data && data.stats && data.stats[0] && data.stats[0].splits) || [];
+        return stats;
+    }
+
+    // Helper to format season string like 20222023 -> 2022-23
+    formatSeasonLabel(seasonStr) {
+        if (!seasonStr || seasonStr.length !== 8) return seasonStr || '-';
+        const start = seasonStr.slice(0, 4);
+        const endShort = seasonStr.slice(6, 8);
+        return `${start}-${endShort}`;
+    }
+
+    // Render seasons table HTML
+    renderSeasonsTable(rows) {
+        const header = `
+            <div class="seasons-header">
+                <div>Season</div>
+                <div>Team</div>
+                <div>GP</div>
+                <div>G</div>
+                <div>A</div>
+                <div>PTS</div>
+                <div>+/-</div>
+            </div>
+        `;
+        const body = rows.map(r => `
+            <div class="seasons-row">
+                <div>${r.season}</div>
+                <div>${r.team}</div>
+                <div>${r.gp}</div>
+                <div>${r.g}</div>
+                <div>${r.a}</div>
+                <div>${r.pts}</div>
+                <div>${r.plusMinus}</div>
+            </div>
+        `).join('');
+        return header + body;
     }
 
     // Sets up event listeners for the search input, clear search button, and modal
