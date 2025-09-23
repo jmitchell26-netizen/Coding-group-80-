@@ -449,13 +449,22 @@ class NHLPlayerTiers {
             </div>
         `).join('');
 
-        // Prepare Recent Seasons section states
+        // Prepare Recent Seasons & Career sections states
         const loadingEl = document.getElementById('recentSeasonsLoading');
         const errorEl = document.getElementById('recentSeasonsError');
         const seasonsEl = document.getElementById('recentSeasons');
         if (loadingEl) loadingEl.style.display = 'block';
         if (errorEl) errorEl.style.display = 'none';
         if (seasonsEl) seasonsEl.innerHTML = '';
+
+        const careerLoadingEl = document.getElementById('careerSeasonsLoading');
+        const careerErrorEl = document.getElementById('careerSeasonsError');
+        const careerSeasonsEl = document.getElementById('careerSeasons');
+        const careerTotalsEl = document.getElementById('careerSeasonsTotals');
+        if (careerLoadingEl) careerLoadingEl.style.display = 'block';
+        if (careerErrorEl) careerErrorEl.style.display = 'none';
+        if (careerSeasonsEl) careerSeasonsEl.innerHTML = '';
+        if (careerTotalsEl) careerTotalsEl.innerHTML = '';
 
         // Show modal
         document.getElementById('playerModal').style.display = 'block';
@@ -464,6 +473,12 @@ class NHLPlayerTiers {
         this.loadRecentSeasons(player).catch(() => {
             if (loadingEl) loadingEl.style.display = 'none';
             if (errorEl) errorEl.style.display = 'block';
+        });
+
+        // Load career NHL seasons asynchronously
+        this.loadCareerSeasons(player).catch(() => {
+            if (careerLoadingEl) careerLoadingEl.style.display = 'none';
+            if (careerErrorEl) careerErrorEl.style.display = 'block';
         });
     }
 
@@ -563,6 +578,65 @@ class NHLPlayerTiers {
             </div>
         `).join('');
         return header + body;
+    }
+
+    // Fetch and render ALL NHL seasons + totals
+    async loadCareerSeasons(player) {
+        const loadingEl = document.getElementById('careerSeasonsLoading');
+        const errorEl = document.getElementById('careerSeasonsError');
+        const seasonsEl = document.getElementById('careerSeasons');
+        const totalsEl = document.getElementById('careerSeasonsTotals');
+
+        if (!seasonsEl || !loadingEl || !errorEl || !totalsEl) {
+            return;
+        }
+
+        if (String(player.id).startsWith('custom')) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'none';
+            seasonsEl.innerHTML = '<p style="color:#718096;">No NHL career available for this player.</p>';
+            totalsEl.innerHTML = '';
+            return;
+        }
+
+        const seasons = await this.fetchPlayerYearByYearStats(player.id);
+        const nhlSeasons = seasons.filter(s => (s.league && (s.league.name === 'National Hockey League' || s.league.id === 133)));
+
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'none';
+
+        if (nhlSeasons.length === 0) {
+            seasonsEl.innerHTML = '<p style="color:#718096;">No NHL career seasons found.</p>';
+            totalsEl.innerHTML = '';
+            return;
+        }
+
+        const rows = nhlSeasons.map(s => ({
+            season: this.formatSeasonLabel(s.season),
+            team: (s.team && (s.team.name || s.team.abbreviation)) || '-',
+            gp: s.stat && (s.stat.games ?? '-') ,
+            g: s.stat && (s.stat.goals ?? '-') ,
+            a: s.stat && (s.stat.assists ?? '-') ,
+            pts: s.stat && (s.stat.points ?? '-') ,
+            plusMinus: s.stat && (s.stat.plusMinus ?? '-')
+        }));
+
+        seasonsEl.innerHTML = this.renderSeasonsTable(rows);
+
+        // Compute totals (ignore '-' values)
+        const totals = rows.reduce((acc, r) => {
+            const toNum = v => (typeof v === 'number') ? v : (isNaN(parseInt(v, 10)) ? 0 : parseInt(v, 10));
+            acc.gp += toNum(r.gp);
+            acc.g += toNum(r.g);
+            acc.a += toNum(r.a);
+            acc.pts += toNum(r.pts);
+            acc.plusMinus += toNum(r.plusMinus);
+            return acc;
+        }, { gp: 0, g: 0, a: 0, pts: 0, plusMinus: 0 });
+
+        totalsEl.innerHTML = `
+            <strong>Career NHL Totals:</strong> GP ${totals.gp} · G ${totals.g} · A ${totals.a} · PTS ${totals.pts} · +/- ${totals.plusMinus}
+        `;
     }
 
     // Sets up event listeners for the search input, clear search button, and modal

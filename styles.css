@@ -349,6 +349,48 @@ body {
     padding-bottom: 0.5rem;
 }
 
+/* Seasons tables */
+.seasons-table {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.6fr 0.6fr 0.6fr 0.6fr 0.6fr;
+    gap: 0.5rem;
+    background: #f8fafc;
+    border: 2px solid rgba(102, 126, 234, 0.35);
+    border-radius: 12px;
+    padding: 0.75rem;
+}
+
+.seasons-header,
+.seasons-row {
+    display: contents;
+}
+
+.seasons-header > div {
+    font-weight: 600;
+    color: #2d3748;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.35);
+    padding-bottom: 0.35rem;
+}
+
+.seasons-row > div {
+    padding: 0.4rem 0.25rem;
+    border-bottom: 1px dashed rgba(118, 75, 162, 0.25);
+    color: #4a5568;
+}
+
+.seasons-row:last-child > div {
+    border-bottom: none;
+}
+
+.seasons-totals {
+    margin-top: 0.75rem;
+    background: #edf2f7;
+    border-left: 4px solid #764ba2;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: #2d3748;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
