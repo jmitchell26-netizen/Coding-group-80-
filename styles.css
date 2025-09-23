@@ -317,6 +317,56 @@ body {
     padding: 2rem;
 }
 
+.modal-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle input { display: none; }
+
+.slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    transition: background 0.2s ease;
+}
+
+.slider::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+}
+
+.toggle input:checked + .slider {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.toggle input:checked + .slider::after {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+
 .player-info {
     display: flex;
     gap: 2rem;

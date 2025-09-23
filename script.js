@@ -469,14 +469,52 @@ class NHLPlayerTiers {
         // Show modal
         document.getElementById('playerModal').style.display = 'block';
 
+        // Attach playoffs toggle behavior
+        const toggle = document.getElementById('togglePlayoffs');
+        if (toggle) {
+            toggle.checked = false;
+            toggle.onchange = () => {
+                // Re-fetch both recent and career when toggled
+                this.refreshSeasonsSections(player, toggle.checked);
+            };
+        }
+
         // Load recent NHL seasons asynchronously (ignore errors gracefully)
-        this.loadRecentSeasons(player).catch(() => {
+        this.loadRecentSeasons(player, false).catch(() => {
             if (loadingEl) loadingEl.style.display = 'none';
             if (errorEl) errorEl.style.display = 'block';
         });
 
         // Load career NHL seasons asynchronously
-        this.loadCareerSeasons(player).catch(() => {
+        this.loadCareerSeasons(player, false).catch(() => {
+            if (careerLoadingEl) careerLoadingEl.style.display = 'none';
+            if (careerErrorEl) careerErrorEl.style.display = 'block';
+        });
+    }
+
+    refreshSeasonsSections(player, includePlayoffs) {
+        // Reset states
+        const loadingEl = document.getElementById('recentSeasonsLoading');
+        const errorEl = document.getElementById('recentSeasonsError');
+        const seasonsEl = document.getElementById('recentSeasons');
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (errorEl) errorEl.style.display = 'none';
+        if (seasonsEl) seasonsEl.innerHTML = '';
+
+        const careerLoadingEl = document.getElementById('careerSeasonsLoading');
+        const careerErrorEl = document.getElementById('careerSeasonsError');
+        const careerSeasonsEl = document.getElementById('careerSeasons');
+        const careerTotalsEl = document.getElementById('careerSeasonsTotals');
+        if (careerLoadingEl) careerLoadingEl.style.display = 'block';
+        if (careerErrorEl) careerErrorEl.style.display = 'none';
+        if (careerSeasonsEl) careerSeasonsEl.innerHTML = '';
+        if (careerTotalsEl) careerTotalsEl.innerHTML = '';
+
+        this.loadRecentSeasons(player, includePlayoffs).catch(() => {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'block';
+        });
+        this.loadCareerSeasons(player, includePlayoffs).catch(() => {
             if (careerLoadingEl) careerLoadingEl.style.display = 'none';
             if (careerErrorEl) careerErrorEl.style.display = 'block';
         });
@@ -488,7 +526,7 @@ class NHLPlayerTiers {
     }
 
     // Fetch and render last 5 NHL seasons for a player in the modal
-    async loadRecentSeasons(player) {
+    async loadRecentSeasons(player, includePlayoffs = false) {
         const loadingEl = document.getElementById('recentSeasonsLoading');
         const errorEl = document.getElementById('recentSeasonsError');
         const seasonsEl = document.getElementById('recentSeasons');
@@ -506,7 +544,7 @@ class NHLPlayerTiers {
         }
 
         try {
-            const seasons = await this.fetchPlayerYearByYearStats(player.id);
+            const seasons = await this.fetchPlayerYearByYearStats(player.id, includePlayoffs);
             const nhlSeasons = seasons
                 .filter(s => (s.league && (s.league.name === 'National Hockey League' || s.league.id === 133)))
                 .slice(-5) // last 5 NHL seasons
@@ -536,8 +574,9 @@ class NHLPlayerTiers {
     }
 
     // Call NHL API to get year-by-year stats for a player
-    async fetchPlayerYearByYearStats(playerId) {
-        const url = `https://statsapi.web.nhl.com/api/v1/people/${playerId}/stats?stats=yearByYear`;
+    async fetchPlayerYearByYearStats(playerId, includePlayoffs = false) {
+        const statType = includePlayoffs ? 'yearByYearPlayoffs' : 'yearByYear';
+        const url = `https://statsapi.web.nhl.com/api/v1/people/${playerId}/stats?stats=${statType}`;
         const resp = await fetch(url);
         if (!resp.ok) throw new Error('Failed to fetch year-by-year stats');
         const data = await resp.json();
@@ -581,7 +620,7 @@ class NHLPlayerTiers {
     }
 
     // Fetch and render ALL NHL seasons + totals
-    async loadCareerSeasons(player) {
+    async loadCareerSeasons(player, includePlayoffs = false) {
         const loadingEl = document.getElementById('careerSeasonsLoading');
         const errorEl = document.getElementById('careerSeasonsError');
         const seasonsEl = document.getElementById('careerSeasons');
@@ -599,7 +638,7 @@ class NHLPlayerTiers {
             return;
         }
 
-        const seasons = await this.fetchPlayerYearByYearStats(player.id);
+        const seasons = await this.fetchPlayerYearByYearStats(player.id, includePlayoffs);
         const nhlSeasons = seasons.filter(s => (s.league && (s.league.name === 'National Hockey League' || s.league.id === 133)));
 
         loadingEl.style.display = 'none';
@@ -634,8 +673,9 @@ class NHLPlayerTiers {
             return acc;
         }, { gp: 0, g: 0, a: 0, pts: 0, plusMinus: 0 });
 
+        const scopeLabel = includePlayoffs ? 'Career NHL Playoffs Totals' : 'Career NHL Totals';
         totalsEl.innerHTML = `
-            <strong>Career NHL Totals:</strong> GP ${totals.gp} · G ${totals.g} · A ${totals.a} · PTS ${totals.pts} · +/- ${totals.plusMinus}
+            <strong>${scopeLabel}:</strong> GP ${totals.gp} · G ${totals.g} · A ${totals.a} · PTS ${totals.pts} · +/- ${totals.plusMinus}
         `;
     }
 
