@@ -772,4 +772,20 @@ class NHLPlayerTiers {
 window.nhlApp = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.nhlApp = new NHLPlayerTiers();
+
+    // Apply saved theme preference
+    try {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') document.documentElement.classList.add('dark');
+    } catch (_) {}
+
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+        toggle.addEventListener('click', () => {
+            const root = document.documentElement;
+            const isDark = root.classList.toggle('dark');
+            try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (_) {}
+        });
+    }
 });
