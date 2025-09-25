@@ -8,72 +8,73 @@
 /* Theme Variables */
 :root {
     --radius: 0.65rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.141 0.005 285.823);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.141 0.005 285.823);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.606 0.25 292.717);
-    --primary-foreground: oklch(0.969 0.016 293.756);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.967 0.001 286.375);
-    --muted-foreground: oklch(0.552 0.016 285.938);
-    --accent: oklch(0.967 0.001 286.375);
-    --accent-foreground: oklch(0.21 0.006 285.885);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.92 0.004 286.32);
-    --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.606 0.25 292.717);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.606 0.25 292.717);
-    --sidebar-primary-foreground: oklch(0.969 0.016 293.756);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.606 0.25 292.717);
-    --bg-gradient: linear-gradient(135deg, var(--primary) 0%, var(--chart-4) 100%);
+    --background: #f6f8fb;
+    --foreground: #1f2937;
+    --card: #ffffff;
+    --card-foreground: #1f2937;
+    --popover: #ffffff;
+    --popover-foreground: #1f2937;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #e2e8f0;
+    --secondary-foreground: #111827;
+    --muted: #f1f5f9;
+    --muted-foreground: #475569;
+    --accent: #e2e8f0;
+    --accent-foreground: #111827;
+    --destructive: #ef4444;
+    --border: #e5e7eb;
+    --input: #e5e7eb;
+    --ring: #60a5fa;
+    --chart-1: #2563eb;
+    --chart-2: #0ea5e9;
+    --chart-3: #14b8a6;
+    --chart-4: #22c55e;
+    --chart-5: #f59e0b;
+    --sidebar: #f9fafb;
+    --sidebar-foreground: #1f2937;
+    --sidebar-primary: #2563eb;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e2e8f0;
+    --sidebar-accent-foreground: #111827;
+    --sidebar-border: #e5e7eb;
+    --sidebar-ring: #60a5fa;
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e6f0ff 100%);
 }
 
 .dark {
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.541 0.281 293.009);
-    --primary-foreground: oklch(0.969 0.016 293.756);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.541 0.281 293.009);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.541 0.281 293.009);
-    --sidebar-primary-foreground: oklch(0.969 0.016 293.756);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.541 0.281 293.009);
+    --background: #0b1220;
+    --foreground: #e5e7eb;
+    --card: #0f172a;
+    --card-foreground: #e5e7eb;
+    --popover: #0f172a;
+    --popover-foreground: #e5e7eb;
+    --primary: #3b82f6;
+    --primary-foreground: #0b1220;
+    --secondary: #1f2937;
+    --secondary-foreground: #e5e7eb;
+    --muted: #111827;
+    --muted-foreground: #cbd5e1;
+    --accent: #1f2937;
+    --accent-foreground: #e5e7eb;
+    --destructive: #f87171;
+    --border: #243244;
+    --input: #243244;
+    --ring: #60a5fa;
+    --chart-1: #2563eb;
+    --chart-2: #0ea5e9;
+    --chart-3: #14b8a6;
+    --chart-4: #22c55e;
+    --chart-5: #f59e0b;
+    --sidebar: #0f172a;
+    --sidebar-foreground: #e5e7eb;
+    --sidebar-primary: #3b82f6;
+    --sidebar-primary-foreground: #0b1220;
+    --sidebar-accent: #1f2937;
+    --sidebar-accent-foreground: #e5e7eb;
+    --sidebar-border: #243244;
+    --sidebar-ring: #60a5fa;
+    --bg-gradient: linear-gradient(135deg, #0b1220 0%, #0c1a33 100%);
 }
 
 body {
@@ -112,7 +113,7 @@ body {
     font-weight: 700;
     color: #2d3748;
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--chart-2), var(--chart-1));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -120,7 +121,7 @@ body {
 
 .subtitle {
     font-size: 1.2rem;
-    color: #718096;
+    color: var(--muted-foreground);
     font-weight: 400;
 }
 
@@ -182,7 +183,7 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--ring);
 }
 
 .clear-search-btn {
@@ -248,7 +249,7 @@ body {
 .tier-5 .tier-title { color: #3182ce; }
 
 .tier-description {
-    color: #718096;
+    color: var(--muted-foreground);
     font-size: 1rem;
     font-weight: 400;
 }
@@ -275,7 +276,7 @@ body {
 .player-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    border-color: #667eea;
+    border-color: var(--ring);
 }
 
 .player-photo {
@@ -290,26 +291,26 @@ body {
 }
 
 .player-card:hover .player-photo {
-    border-color: #667eea;
+    border-color: var(--ring);
 }
 
 .player-name {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #2d3748;
+    color: var(--card-foreground);
     text-align: center;
     margin-bottom: 0.5rem;
     transition: color 0.3s ease;
 }
 
 .player-card:hover .player-name {
-    color: #667eea;
+    color: var(--chart-1);
 }
 
 .player-info {
     text-align: center;
     font-size: 0.9rem;
-    color: #718096;
+    color: var(--muted-foreground);
 }
 
 .player-salary {
@@ -428,8 +429,8 @@ body {
 .stats-section h3 {
     font-size: 1.5rem;
     margin-bottom: 1rem;
-    color: #2d3748;
-    border-bottom: 2px solid #e2e8f0;
+    color: var(--card-foreground);
+    border-bottom: 2px solid var(--border);
     padding-bottom: 0.5rem;
 }
 
@@ -445,7 +446,7 @@ body {
     padding: 1rem;
     border-radius: 8px;
     text-align: center;
-    border-left: 4px solid var(--ring, #667eea);
+    border-left: 4px solid var(--ring);
 }
 
 .stat-value {
@@ -550,7 +551,7 @@ body {
 .seasons-section {
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border);
 }
 
 .milestones-grid,
@@ -562,30 +563,30 @@ body {
 
 .milestone-item,
 .award-item {
-    background: #f7fafc;
+    background: var(--muted);
     padding: 1rem;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid var(--ring);
 }
 
 .milestone-date,
 .award-year {
     font-size: 0.9rem;
-    color: #718096;
+    color: var(--muted-foreground);
     margin-bottom: 0.5rem;
 }
 
 .milestone-description,
 .award-name {
     font-size: 1.1rem;
-    color: #2d3748;
+    color: var(--card-foreground);
     font-weight: 500;
 }
 
 .seasons-table-container {
     overflow-x: auto;
     margin-top: 1rem;
-    background: white;
+    background: var(--card);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -604,19 +605,19 @@ body {
 }
 
 .seasons-table th {
-    background: #f7fafc;
+    background: var(--muted);
     font-weight: 600;
-    color: #2d3748;
+    color: var(--card-foreground);
     position: sticky;
     top: 0;
 }
 
 .seasons-table tr:hover {
-    background: #f7fafc;
+    background: var(--muted);
 }
 
 .seasons-table td {
-    color: #4a5568;
+    color: var(--muted-foreground);
 }
 
 /* Utility Classes */
