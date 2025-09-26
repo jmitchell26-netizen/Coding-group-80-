@@ -271,6 +271,8 @@ body {
     transition: all 0.3s ease;
     cursor: pointer;
     border: 2px solid var(--border, transparent);
+    position: relative;
+    overflow: visible;
 }
 
 .player-card:hover {
@@ -618,6 +620,285 @@ body {
 
 .seasons-table td {
     color: var(--muted-foreground);
+}
+
+/* Prediction Styles */
+.prediction-section {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.prediction-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.prediction-main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.predicted-points {
+    text-align: center;
+}
+
+.predicted-points span {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: block;
+}
+
+.prediction-range {
+    text-align: center;
+}
+
+.prediction-range span {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    display: block;
+}
+
+.prediction-confidence {
+    text-align: center;
+}
+
+.confidence-meter {
+    height: 8px;
+    background: var(--muted);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.confidence-level {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.confidence-high {
+    background: var(--chart-4);
+}
+
+.confidence-medium {
+    background: var(--chart-3);
+}
+
+.confidence-low {
+    background: var(--chart-2);
+}
+
+.prediction-factors {
+    background: var(--muted);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.prediction-factors h4 {
+    margin-bottom: 1rem;
+    color: var(--card-foreground);
+}
+
+.factors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.factor-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--card);
+    border-radius: 6px;
+    border-left: 3px solid var(--primary);
+}
+
+.factor-label {
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+}
+
+.factor-value {
+    font-weight: 600;
+    color: var(--card-foreground);
+}
+
+.no-prediction {
+    text-align: center;
+    color: var(--muted-foreground);
+    padding: 1rem;
+}
+
+.prediction-methodology {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.prediction-methodology h4 {
+    color: var(--card-foreground);
+    margin-bottom: 1rem;
+}
+
+.prediction-methodology p {
+    color: var(--muted-foreground);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.prediction-methodology ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+}
+
+.prediction-methodology li {
+    color: var(--card-foreground);
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.prediction-methodology li:before {
+    content: "•";
+    color: var(--primary);
+    position: absolute;
+    left: 0;
+}
+
+.methodology-note {
+    font-style: italic;
+    font-size: 0.9rem !important;
+    opacity: 0.8;
+}
+
+/* Prediction History Visualization */
+.prediction-history {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.prediction-history h4 {
+    color: var(--card-foreground);
+    margin-bottom: 1rem;
+}
+
+.history-chart {
+    height: 200px;
+    background: var(--muted);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.history-bar {
+    position: absolute;
+    bottom: 1rem;
+    width: 40px;
+    background: var(--primary);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+}
+
+.history-bar.predicted {
+    background: var(--chart-2);
+}
+
+.history-bar.actual {
+    background: var(--chart-4);
+}
+
+.history-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem;
+    background: var(--card);
+    border-radius: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.legend-color.predicted {
+    background: var(--chart-2);
+}
+
+.legend-color.actual {
+    background: var(--chart-4);
+}
+
+.legend-label {
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+}
+
+/* Player Card Prediction Badge */
+.prediction-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--card);
+    padding: 0.5rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border);
+    transition: transform 0.2s ease;
+}
+
+.prediction-badge:hover {
+    transform: translateY(-2px);
+}
+
+.prediction-trend {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.trend-up .prediction-trend {
+    color: var(--chart-4);
+}
+
+.trend-down .prediction-trend {
+    color: var(--destructive);
+}
+
+.prediction-value {
+    font-weight: 600;
+    color: var(--card-foreground);
+}
+
+.prediction-label {
+    font-size: 0.7rem;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Utility Classes */

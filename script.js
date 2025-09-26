@@ -91,7 +91,7 @@ class NHLPlayerTiers {
                 'Mikko Rantanen': '8478420',
                 'Jesper Bratt': '8479407',
                 'Mark Scheifele': '8476460',
-                'Martin Necas': '8480039',
+                'Martin Nečas': '8480039',
                 'Brayden Point': '8478010',
                 'Matt Duchene': '8475168',
                 'Dylan Strome': '8478440',
@@ -101,7 +101,7 @@ class NHLPlayerTiers {
                 'Jake Guentzel': '8477404',
                 'Jason Robertson': '8480027',
                 'Lucas Raymond': '8482078',
-                'Tim Stutzle': '8482109',
+                'Tim Stützle': '8482109',
                 'Filip Forsberg': '8476887',
                 'Travis Konecny': '8478439',
                 'John Tavares': '8475166',
@@ -131,7 +131,37 @@ class NHLPlayerTiers {
                 'Max Domi': '8477503',
                 'Kaapo Kakko': '8481554',
                 'Radko Gudas': '8475462',
-                'Tyler Toffoli': '8475726'
+                'Tyler Toffoli': '8475726',
+                'Ryan Donato': '8477946',
+                'Andreas Athanasiou': '8476891',
+                'Anthony Mantha': '8477431',
+                'Jeff Skinner': '8475784',
+                'Charlie Coyle': '8475745',
+                'Joel Eriksson Ek': '8478443',
+                'Nick Cousins': '8476332',
+                'Tyler Bertuzzi': '8477479',
+                'J.T. Miller': '8476468',
+                'Eeli Tolvanen': '8479991',
+                'Connor Brown': '8476856',
+                'Barclay Goodrow': '8476326',
+                'Anthony Duclair': '8477412',
+                'Mitchell Stephens': '8478832',
+                'Sammy Walker': '8480164',
+                'Connor Garland': '8478423',
+                'Anthony Beauvillier': '8478463',
+                'Josh Anderson': '8476879',
+                'Nick Foligno': '8473445',
+                'Justin Schultz': '8474581',
+                'Tyson Jost': '8479361',
+                'Adam Henrique': '8474556',
+                'Anthony Cirelli': '8478519',
+                'Sam Lafferty': '8478056',
+                'Andrew Mangiapane': '8478233',
+                'Jordan Greenway': '8479532',
+                'Jack Roslovic': '8478466',
+                'Michael Bunting': '8478875',
+                'Lane Hutson': '8483506',
+                'Joel Hanley': '8477803'
             };
 
             for (const rawLine of lines) {
@@ -145,7 +175,16 @@ class NHLPlayerTiers {
                     continue;
                 }
 
-                const [rankStr, name, team, position, gpStr, gStr, aStr, ptsStr, plusMinusStr] = parts;
+                let [rankStr, name, team, position, gpStr, gStr, aStr, ptsStr, plusMinusStr] = parts;
+
+                // Fix known data issues
+                if (name.includes('Boeser')) {
+                    name = 'Brock Boeser';
+                }
+                 if (name.includes('Stutzle')) {
+                    name = 'Tim Stützle';
+                }
+
                 const key = `${name}|${team}`;
                 if (seen.has(key)) continue;
                 seen.add(key);
@@ -159,7 +198,7 @@ class NHLPlayerTiers {
 
                 // Generate a unique ID for players without a known NHL ID
                 const playerId = playerIds[name] || `custom${rank}`;
-                const photoUrl = playerIds[name] 
+                const photoUrl = playerIds[name]
                     ? `https://assets.nhle.com/mugs/nhl/latest/${playerIds[name]}.png`
                     : `https://assets.nhle.com/mugs/nhl/latest/default.png`;
 
@@ -223,6 +262,25 @@ class NHLPlayerTiers {
 		return `${start}-${endShort}`;
 	}
 
+	// Get current NHL season (e.g., 20232024)
+	getCurrentSeason() {
+		const now = new Date();
+		const year = now.getFullYear();
+		const month = now.getMonth() + 1;
+		// NHL season starts in October
+		const seasonStart = month >= 10 ? year : year - 1;
+		return `${seasonStart}${seasonStart + 1}`;
+	}
+
+	// Get previous season (e.g., if current is 20232024, passing 1 returns 20222023)
+	getPreviousSeason(yearsBack = 1) {
+		const now = new Date();
+		const year = now.getFullYear() - yearsBack;
+		const month = now.getMonth() + 1;
+		const seasonStart = month >= 10 ? year : year - 1;
+		return `${seasonStart}${seasonStart + 1}`;
+	}
+
 	// Adds ordinal suffix to numbers (1 -> 1st, 2 -> 2nd, 3 -> 3rd)
 	ordinal(n) {
 		const s = ["th", "st", "nd", "rd"], v = n % 100;
@@ -241,12 +299,17 @@ class NHLPlayerTiers {
 		try {
 			// Fetch person info
 			const infoResp = await fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}`);
+			if (!infoResp.ok) throw new Error(`Failed to fetch player info: ${infoResp.status}`);
 			const infoJson = await infoResp.json();
 			const person = (infoJson && infoJson.people && infoJson.people[0]) || {};
 
+			// Basic info
 			player.nationality = person.nationality || person.birthCountry || player.nationality || '-';
-			player.height = person.height || player.height || null; // e.g., 6' 2"
+			player.height = person.height || player.height || null;
 			player.weight = person.weight ? `${person.weight} lb` : (player.weight || null);
+			player.birthDate = person.birthDate || null;
+			
+			// Draft info
 			const draftYear = person.draftYear;
 			const draftRound = person.draftRound ? parseInt(person.draftRound, 10) : null;
 			const draftOverall = person.draftOverall ? parseInt(person.draftOverall, 10) : null;
@@ -257,24 +320,78 @@ class NHLPlayerTiers {
 				player.draft = `${draftYear} Draft${roundTxt ? `, ${roundTxt} round` : ''}${pickTxt ? `, ${pickTxt} overall` : ''}${draftTeam ? ` (${draftTeam})` : ''}`;
 			}
 
-			// Fetch year-by-year stats
-			const statsResp = await fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=yearByYear`);
-			const statsJson = await statsResp.json();
-			const splits = (statsJson && statsJson.stats && statsJson.stats[0] && statsJson.stats[0].splits) || [];
-			const nhlSplits = splits.filter(s => s.league && (s.league.abbreviation === 'NHL' || s.league.name === 'National Hockey League'));
-			player.seasons = nhlSplits.map(s => ({
-				year: this.formatSeason(s.season),
-				team: (s.team && s.team.name) || '-',
-				gp: (s.stat && s.stat.games) || 0,
-				g: (s.stat && s.stat.goals) || 0,
-				a: (s.stat && s.stat.assists) || 0,
-				p: (s.stat && s.stat.points) || 0,
-				plusMinus: (s.stat && (s.stat.plusMinus ?? '-')),
-				pim: (s.stat && s.stat.pim) || 0,
-				ppg: (s.stat && s.stat.powerPlayGoals) || 0,
-				shg: (s.stat && s.stat.shortHandedGoals) || 0,
-				gwg: (s.stat && s.stat.gameWinningGoals) || 0
+			// Fetch comprehensive stats
+			const statsPromises = [
+				// Regular season stats
+				fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=yearByYear`),
+				// Playoff stats
+				fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=yearByYearPlayoffs`),
+				// Advanced stats (last 3 seasons)
+				fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=statsSingleSeason&season=${this.getCurrentSeason()}`),
+				fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=statsSingleSeason&season=${this.getPreviousSeason(1)}`),
+				fetch(`https://statsapi.web.nhl.com/api/v1/people/${id}/stats?stats=statsSingleSeason&season=${this.getPreviousSeason(2)}`)
+			];
+
+			const responses = await Promise.all(statsPromises);
+			const statsData = await Promise.all(responses.map(async (resp) => {
+				if (!resp.ok) return null;
+				try {
+					return await resp.json();
+				} catch (e) {
+					console.warn('Failed to parse stats response:', e);
+					return null;
+				}
 			}));
+
+			// Process regular season stats
+			const regularSeasonStats = statsData[0];
+			const splits = (regularSeasonStats && regularSeasonStats.stats && regularSeasonStats.stats[0] && regularSeasonStats.stats[0].splits) || [];
+			const nhlSplits = splits.filter(s => s.league && (s.league.abbreviation === 'NHL' || s.league.name === 'National Hockey League'));
+			
+			// Process playoff stats
+			const playoffStats = statsData[1];
+			const playoffSplits = (playoffStats && playoffStats.stats && playoffStats.stats[0] && playoffStats.stats[0].splits) || [];
+			const nhlPlayoffSplits = playoffSplits.filter(s => s.league && (s.league.abbreviation === 'NHL' || s.league.name === 'National Hockey League'));
+
+			// Combine regular season stats with advanced metrics
+			player.seasons = nhlSplits.map(s => {
+				const season = s.season;
+				const advancedStats = statsData.slice(2).find(data => {
+					const splits = data && data.stats && data.stats[0] && data.stats[0].splits;
+					return splits && splits[0] && splits[0].season === season;
+				});
+
+				const advanced = (advancedStats && advancedStats.stats && advancedStats.stats[0] && advancedStats.stats[0].splits[0]) || {};
+				
+				// Find matching playoff stats
+				const playoffStat = nhlPlayoffSplits.find(p => p.season === season);
+
+				return {
+					year: this.formatSeason(season),
+					team: (s.team && s.team.name) || '-',
+					// Regular season stats
+					gp: (s.stat && s.stat.games) || 0,
+					g: (s.stat && s.stat.goals) || 0,
+					a: (s.stat && s.stat.assists) || 0,
+					p: (s.stat && s.stat.points) || 0,
+					plusMinus: (s.stat && (s.stat.plusMinus ?? '-')),
+					pim: (s.stat && s.stat.pim) || 0,
+					ppg: (s.stat && s.stat.powerPlayGoals) || 0,
+					shg: (s.stat && s.stat.shortHandedGoals) || 0,
+					gwg: (s.stat && s.stat.gameWinningGoals) || 0,
+					// Advanced stats
+					timeOnIcePerGame: (s.stat && s.stat.timeOnIcePerGame) || '0:00',
+					powerPlayTimeOnIce: (s.stat && s.stat.powerPlayTimeOnIce) || '0:00',
+					shortHandedTimeOnIce: (s.stat && s.stat.shortHandedTimeOnIce) || '0:00',
+					shotPct: (s.stat && s.stat.shotPct) || 0,
+					faceOffPct: (s.stat && s.stat.faceOffPct) || 0,
+					// Playoff stats
+					playoffGP: (playoffStat && playoffStat.stat && playoffStat.stat.games) || 0,
+					playoffG: (playoffStat && playoffStat.stat && playoffStat.stat.goals) || 0,
+					playoffA: (playoffStat && playoffStat.stat && playoffStat.stat.assists) || 0,
+					playoffP: (playoffStat && playoffStat.stat && playoffStat.stat.points) || 0
+				};
+			});
 
 			// Compute career totals from NHL splits
 			if (player.seasons && player.seasons.length) {
@@ -457,10 +574,28 @@ class NHLPlayerTiers {
     // Creates a player card HTML element
     createPlayerCard(player) {
         const pointsClass = player.currentSeasonPoints >= 40 ? 'positive' : 'negative';
+        
+        // Get prediction if available
+        let predictionHtml = '';
+        if (window.predictor) {
+            const prediction = window.predictor.predictNextSeason(player);
+            const trend = prediction.predictedPoints > player.currentSeasonPoints ? 'up' : 'down';
+            const trendIcon = trend === 'up' ? '↑' : '↓';
+            const trendClass = trend === 'up' ? 'trend-up' : 'trend-down';
+            
+            predictionHtml = `
+                <div class="prediction-badge ${trendClass}">
+                    <span class="prediction-trend">${trendIcon}</span>
+                    <span class="prediction-value">${prediction.predictedPoints}</span>
+                    <span class="prediction-label">Next Season</span>
+                </div>
+            `;
+        }
 
         return `
             <div class="player-card" data-player-id="${player.id}">
                 <img src="${player.photo}" alt="${player.name}" class="player-photo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRTVFN0VCIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iNDAiIHI9IjIwIiBmaWxsPSIjOUI5QjlCIi8+Cjx0ZXh0IHg9IjQwIiB5PSI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PC90ZXh0Pgo8L3N2Zz4K'">
+                ${predictionHtml}
                 <h3 class="player-name">${player.name}</h3>
                 <div class="player-info">
                     <div class="player-salary">$${(player.salary / 1000000).toFixed(1)}M</div>
@@ -479,6 +614,16 @@ class NHLPlayerTiers {
 		try {
 			await this.enrichPlayerDetails(player);
 		} catch (_) {}
+
+        // Get prediction if predictor is available
+        let prediction = null;
+        if (window.predictor) {
+            try {
+                prediction = window.predictor.predictNextSeason(player);
+            } catch (e) {
+                console.warn('Failed to generate prediction:', e);
+            }
+        }
 
         // Populate basic info
         document.getElementById('modalPlayerName').textContent = player.name;
@@ -568,6 +713,80 @@ class NHLPlayerTiers {
                 <span class="stat-label">${stat.label}</span>
             </div>
         `).join('');
+
+        // Prediction Details
+        if (prediction) {
+            // Predicted points
+            document.getElementById('modalPredictedPoints').textContent = prediction.predictedPoints;
+            
+            // Prediction range
+            document.getElementById('modalPredictionRange').textContent = 
+                `${prediction.range.low}-${prediction.range.high}`;
+            
+            // Confidence meter
+            const confidenceMeter = document.getElementById('modalConfidenceMeter');
+            confidenceMeter.style.width = `${prediction.confidence * 100}%`;
+            confidenceMeter.className = `confidence-level confidence-${
+                prediction.confidence >= 0.7 ? 'high' :
+                prediction.confidence >= 0.4 ? 'medium' : 'low'
+            }`;
+            
+            // Prediction factors
+            const factorsHtml = Object.entries(prediction.factors).map(([key, value]) => `
+                <div class="factor-item">
+                    <span class="factor-label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                    <span class="factor-value">${value.toFixed(2)}x</span>
+                </div>
+            `).join('');
+            document.getElementById('modalPredictionFactors').innerHTML = factorsHtml;
+
+            // Populate prediction history visualization
+            const historyChart = document.getElementById('modalPredictionHistory');
+            const predictions = window.predictor.historicalPredictions[player.id] || [];
+            
+            if (predictions.length > 0) {
+                // Find max value for scaling
+                const maxPredicted = Math.max(...predictions.map(p => p.predictedPoints));
+                const maxActual = Math.max(...predictions.map(p => p.actualPoints || 0));
+                const maxValue = Math.max(maxPredicted, maxActual, player.currentSeasonPoints);
+                
+                // Create bars for each prediction
+                const barWidth = Math.min(40, (historyChart.offsetWidth - 40) / (predictions.length * 2));
+                const spacing = barWidth * 0.5;
+                
+                const barsHtml = predictions.map((pred, index) => {
+                    const predictedHeight = (pred.predictedPoints / maxValue) * 160;
+                    const actualHeight = ((pred.actualPoints || player.currentSeasonPoints) / maxValue) * 160;
+                    const x = index * (barWidth * 2 + spacing);
+                    
+                    return `
+                        <div class="history-bar predicted" style="
+                            left: ${x}px;
+                            width: ${barWidth}px;
+                            height: ${predictedHeight}px;
+                        " title="Predicted: ${pred.predictedPoints}"></div>
+                        <div class="history-bar actual" style="
+                            left: ${x + barWidth + 2}px;
+                            width: ${barWidth}px;
+                            height: ${actualHeight}px;
+                        " title="Actual: ${pred.actualPoints || 'Current: ' + player.currentSeasonPoints}"></div>
+                    `;
+                }).join('');
+                
+                historyChart.innerHTML = barsHtml;
+            } else {
+                historyChart.innerHTML = '<div class="no-prediction">No prediction history available</div>';
+            }
+        } else {
+            // Hide or show default state for prediction elements
+            document.getElementById('modalPredictedPoints').textContent = '-';
+            document.getElementById('modalPredictionRange').textContent = '-';
+            document.getElementById('modalConfidenceMeter').style.width = '0%';
+            document.getElementById('modalPredictionFactors').innerHTML = 
+                '<div class="no-prediction">Prediction not available</div>';
+            document.getElementById('modalPredictionHistory').innerHTML = 
+                '<div class="no-prediction">No prediction history available</div>';
+        }
 
         // Career Milestones
         const milestones = this.getPlayerMilestones(player);
@@ -768,10 +987,337 @@ class NHLPlayerTiers {
     }
 }
 
+// Player Prediction System
+class PlayerPredictor {
+    constructor() {
+        this.historicalPredictions = this.loadHistoricalPredictions();
+        this.ageFactors = {
+            young: { min: 18, max: 23, multiplier: 1.1 },    // Young players likely to improve
+            prime: { min: 24, max: 28, multiplier: 1.05 },   // Prime years, slight improvement
+            peak: { min: 29, max: 31, multiplier: 1.0 },     // Peak performance years
+            decline: { min: 32, max: 35, multiplier: 0.95 }, // Slight decline
+            veteran: { min: 36, max: 99, multiplier: 0.9 }   // Veteran decline
+        };
+        this.positionFactors = {
+            'C': 1.1,      // Centers typically get more points
+            'LW': 1.0,     // Wingers standard scoring
+            'RW': 1.0,     // Wingers standard scoring
+            'D': 0.8,      // Defensemen typically score less
+            'G': 0.0       // Goalies don't score
+        };
+    }
+
+    // Load historical predictions from localStorage with data cleanup
+    loadHistoricalPredictions() {
+        try {
+            const saved = localStorage.getItem('playerPredictions');
+            const predictions = saved ? JSON.parse(saved) : {};
+            
+            // Clean up old predictions (older than 365 days)
+            const now = Date.now();
+            const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+            
+            for (const playerId in predictions) {
+                predictions[playerId] = predictions[playerId].filter(pred => {
+                    return (now - pred.timestamp) <= oneYearMs;
+                });
+                
+                // Remove empty arrays
+                if (predictions[playerId].length === 0) {
+                    delete predictions[playerId];
+                }
+            }
+            
+            return predictions;
+        } catch (e) {
+            console.warn('Failed to load historical predictions:', e);
+            return {};
+        }
+    }
+
+    // Save predictions to localStorage with size management
+    saveHistoricalPredictions() {
+        try {
+            // Keep only last 10 predictions per player to manage storage size
+            for (const playerId in this.historicalPredictions) {
+                if (this.historicalPredictions[playerId].length > 10) {
+                    this.historicalPredictions[playerId] = 
+                        this.historicalPredictions[playerId]
+                            .sort((a, b) => b.timestamp - a.timestamp)
+                            .slice(0, 10);
+                }
+            }
+            
+            localStorage.setItem('playerPredictions', 
+                JSON.stringify(this.historicalPredictions)
+            );
+        } catch (e) {
+            if (e.name === 'QuotaExceededError') {
+                // If storage is full, remove oldest predictions
+                this.cleanupOldPredictions();
+                try {
+                    localStorage.setItem('playerPredictions', 
+                        JSON.stringify(this.historicalPredictions)
+                    );
+                } catch (retryError) {
+                    console.warn('Failed to save predictions after cleanup:', retryError);
+                }
+            } else {
+                console.warn('Failed to save predictions:', e);
+            }
+        }
+    }
+
+    // Cleanup old predictions when storage is full
+    cleanupOldPredictions() {
+        for (const playerId in this.historicalPredictions) {
+            // Keep only the 5 most recent predictions when storage is full
+            if (this.historicalPredictions[playerId].length > 5) {
+                this.historicalPredictions[playerId] = 
+                    this.historicalPredictions[playerId]
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, 5);
+            }
+        }
+    }
+
+    // Get age factor for prediction
+    getAgeFactor(age) {
+        for (const [_, range] of Object.entries(this.ageFactors)) {
+            if (age >= range.min && age <= range.max) {
+                return range.multiplier;
+            }
+        }
+        return 1.0; // Default multiplier if age is out of all ranges
+    }
+
+    // Get position factor for prediction
+    getPositionFactor(position) {
+        // Extract primary position from combined positions (e.g., "C/LW" -> "C")
+        const primaryPosition = position.split('/')[0].trim();
+        return this.positionFactors[primaryPosition] || 1.0;
+    }
+
+    // Calculate games played factor
+    getGamesPlayedFactor(gamesPlayed) {
+        const fullSeason = 82;
+        // Cap the adjustment at 1.25x to prevent unrealistic projections
+        return Math.min(1.25, gamesPlayed >= fullSeason ? 1.0 : (fullSeason / Math.max(1, gamesPlayed)));
+    }
+
+    // Calculate weighted points per game trend
+    calculatePointsPerGameTrend(seasons, maxSeasons = 3) {
+        if (!seasons || seasons.length === 0) return null;
+
+        // Get recent seasons, sorted by year
+        const recentSeasons = seasons
+            .slice(-maxSeasons)
+            .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+
+        // Calculate weighted ppg for each season
+        const weightedTrends = recentSeasons.map((season, index) => {
+            const ppg = season.gp > 0 ? season.p / season.gp : 0;
+            const weight = (index + 1) / recentSeasons.length; // More recent seasons weighted higher
+            return {
+                ppg,
+                weight,
+                gp: season.gp,
+                playoffPpg: season.playoffGP > 0 ? season.playoffP / season.playoffGP : 0
+            };
+        });
+
+        // Calculate trend
+        let totalWeight = 0;
+        let weightedPpg = 0;
+        let playoffImpact = 0;
+
+        weightedTrends.forEach(({ppg, weight, gp, playoffPpg}) => {
+            // Weight regular season performance
+            if (gp >= 20) { // Minimum games threshold
+                weightedPpg += ppg * weight;
+                totalWeight += weight;
+            }
+            // Add playoff performance boost
+            if (playoffPpg > ppg) {
+                playoffImpact += (playoffPpg - ppg) * 0.1; // 10% boost for playoff overperformance
+            }
+        });
+
+        return totalWeight > 0 ? (weightedPpg / totalWeight) + playoffImpact : null;
+    }
+
+    // Calculate performance trend factor
+    getTrendFactor(player) {
+        const trend = this.calculatePointsPerGameTrend(player.seasons);
+        if (!trend) return 1.0;
+
+        // Current season ppg
+        const currentPpg = player.gamesPlayed > 0 ? 
+            player.currentSeasonPoints / player.gamesPlayed : 0;
+
+        // Calculate trend direction and strength
+        const trendDiff = trend - currentPpg;
+        const trendStrength = Math.abs(trendDiff) / Math.max(0.5, currentPpg);
+        
+        // Limit trend impact
+        const maxTrendImpact = 0.15; // Maximum 15% adjustment
+        return 1 + Math.max(-maxTrendImpact, Math.min(maxTrendImpact, trendStrength * Math.sign(trendDiff)));
+    }
+
+    // Calculate consistency factor based on recent performance
+    getConsistencyFactor(player) {
+        if (!player.seasons || player.seasons.length < 2) return 1.0;
+        
+        // Look at last three seasons
+        const recentSeasons = player.seasons.slice(-3);
+        const pointsPerGame = recentSeasons.map(s => (s.p / Math.max(1, s.gp)));
+        
+        // Calculate variance in points per game
+        const avg = pointsPerGame.reduce((a, b) => a + b, 0) / pointsPerGame.length;
+        const variance = pointsPerGame.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / pointsPerGame.length;
+        
+        // Calculate consistency score (0-1)
+        const consistencyScore = Math.max(0, 1 - Math.min(1, variance * 2));
+        
+        // Weight consistency more heavily for established players
+        const experienceFactor = Math.min(1, recentSeasons.reduce((sum, s) => sum + s.gp, 0) / 200);
+        
+        // More consistent players get a higher factor
+        return 1 + (0.15 * consistencyScore * experienceFactor);
+    }
+
+    // Main prediction method
+    predictNextSeason(player) {
+        // Base prediction from current season
+        const basePoints = player.currentSeasonPoints;
+        const gamesPlayed = player.gamesPlayed;
+
+        // Calculate various factors
+        const ageFactor = this.getAgeFactor(parseInt(player.age) || 25);
+        const positionFactor = this.getPositionFactor(player.position);
+        const gamesPlayedFactor = this.getGamesPlayedFactor(gamesPlayed);
+        const consistencyFactor = this.getConsistencyFactor(player);
+        const trendFactor = this.getTrendFactor(player);
+
+        // Calculate points per game trend
+        const trend = this.calculatePointsPerGameTrend(player.seasons);
+        const trendPoints = trend ? Math.round(trend * 82) : null;
+
+        // Calculate base prediction adjusted for 82 games
+        let adjustedBasePoints;
+        if (trendPoints && player.seasons && player.seasons.length >= 2) {
+            // Use weighted average of trend and current season
+            const trendWeight = Math.min(0.4, player.seasons.length * 0.1); // Max 40% weight for trend
+            adjustedBasePoints = (basePoints * gamesPlayedFactor * (1 - trendWeight)) + 
+                               (trendPoints * trendWeight);
+        } else {
+            adjustedBasePoints = basePoints * gamesPlayedFactor;
+        }
+
+        // Apply all factors to get final prediction
+        let predictedPoints = Math.round(
+            adjustedBasePoints * ageFactor * positionFactor * consistencyFactor * trendFactor
+        );
+        
+        // Sanity check: cap prediction at reasonable limits
+        const maxIncrease = Math.max(basePoints * 0.5, 40); // Allow 50% increase or 40 points, whichever is higher
+        const maxPrediction = basePoints + maxIncrease;
+        predictedPoints = Math.min(predictedPoints, maxPrediction);
+
+        // Calculate confidence and range
+        const confidence = this.calculateConfidence(player);
+        const range = this.calculatePredictionRange(predictedPoints, confidence);
+
+        // Store prediction
+        const prediction = {
+            predictedPoints,
+            confidence,
+            range,
+            factors: {
+                age: ageFactor,
+                position: positionFactor,
+                gamesPlayed: gamesPlayedFactor,
+                consistency: consistencyFactor
+            },
+            timestamp: Date.now()
+        };
+
+        // Save to historical data
+        if (!this.historicalPredictions[player.id]) {
+            this.historicalPredictions[player.id] = [];
+        }
+        this.historicalPredictions[player.id].push(prediction);
+        this.saveHistoricalPredictions();
+
+        return prediction;
+    }
+
+    // Calculate prediction confidence (0-1)
+    calculateConfidence(player) {
+        let confidence = 0.5; // Start at 50%
+
+        // Age factor
+        if (player.age && player.age >= 22 && player.age <= 32) {
+            confidence += 0.1; // More confident in prime-age players
+        }
+
+        // Games played factor
+        if (player.gamesPlayed >= 41) {
+            confidence += 0.1; // More confident with more games played
+        }
+
+        // Historical data factor
+        if (player.seasons && player.seasons.length > 0) {
+            confidence += 0.1; // More confident with historical data
+        }
+
+        // Consistency factor
+        if (this.getConsistencyFactor(player) > 1.05) {
+            confidence += 0.1; // More confident in consistent players
+        }
+
+        return Math.min(1, Math.max(0, confidence));
+    }
+
+    // Calculate prediction range based on confidence
+    calculatePredictionRange(predictedPoints, confidence) {
+        const varianceFactor = 1 - confidence;
+        const range = Math.round(predictedPoints * varianceFactor);
+        
+        return {
+            low: Math.max(0, predictedPoints - range),
+            high: predictedPoints + range
+        };
+    }
+
+    // Get prediction accuracy for a player
+    getPredictionAccuracy(playerId) {
+        const predictions = this.historicalPredictions[playerId];
+        if (!predictions || predictions.length === 0) return null;
+
+        // Calculate accuracy metrics
+        const accuracies = predictions.map(pred => {
+            const actual = pred.actualPoints;
+            if (typeof actual !== 'number') return null;
+
+            const error = Math.abs(actual - pred.predictedPoints);
+            const accuracy = Math.max(0, 100 - (error / actual * 100));
+            return accuracy;
+        }).filter(acc => acc !== null);
+
+        if (accuracies.length === 0) return null;
+
+        // Return average accuracy
+        return accuracies.reduce((a, b) => a + b, 0) / accuracies.length;
+    }
+}
+
 // Initialize the application when DOM is loaded
 window.nhlApp = null;
+window.predictor = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.nhlApp = new NHLPlayerTiers();
+    window.predictor = new PlayerPredictor();
 
     // Apply saved theme preference
     try {

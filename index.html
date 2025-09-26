@@ -109,6 +109,63 @@
                     </div>
                 </div>
 
+                <!-- Next Season Prediction -->
+                <div class="prediction-section">
+                    <h3>Next Season Prediction</h3>
+                    <div class="prediction-container">
+                        <div class="prediction-main">
+                            <div class="predicted-points">
+                                <span id="modalPredictedPoints">-</span>
+                                <label>Predicted Points</label>
+                            </div>
+                            <div class="prediction-range">
+                                <span id="modalPredictionRange">-</span>
+                                <label>Projected Range</label>
+                            </div>
+                            <div class="prediction-confidence">
+                                <div class="confidence-meter">
+                                    <div id="modalConfidenceMeter" class="confidence-level"></div>
+                                </div>
+                                <label>Prediction Confidence</label>
+                            </div>
+                        </div>
+                        <div class="prediction-factors">
+                            <h4>Prediction Factors</h4>
+                            <div class="factors-grid" id="modalPredictionFactors">
+                                <!-- Factors will be populated here -->
+                            </div>
+                            <div class="prediction-methodology">
+                                <h4>Prediction Methodology</h4>
+                                <p>This prediction is calculated using multiple factors including:</p>
+                                <ul>
+                                    <li>Current season performance</li>
+                                    <li>Age and career trajectory</li>
+                                    <li>Position-specific scoring patterns</li>
+                                    <li>Games played adjustment</li>
+                                    <li>Historical consistency</li>
+                                </ul>
+                                <p class="methodology-note">Predictions are updated daily and may change based on current performance.</p>
+                            </div>
+                            <div class="prediction-history">
+                                <h4>Prediction History</h4>
+                                <div class="history-chart" id="modalPredictionHistory">
+                                    <!-- History chart will be populated here -->
+                                </div>
+                                <div class="history-legend">
+                                    <div class="legend-item">
+                                        <span class="legend-color predicted"></span>
+                                        <span class="legend-label">Predicted</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color actual"></span>
+                                        <span class="legend-label">Actual</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Current Season Stats -->
                 <div class="stats-section">
                     <h3>Current Season Statistics</h3>
