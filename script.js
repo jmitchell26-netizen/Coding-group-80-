@@ -416,7 +416,7 @@ class NHLPlayerTiers {
 		} finally {
 			player.detailsLoaded = true;
 		}
-	}
+    }
 
     // Calculates a player's age based on their birth date
     calculateAge(birthDate) {
@@ -605,7 +605,7 @@ class NHLPlayerTiers {
         `;
     }
 
-	// Displays the player modal with detailed player information
+    // Displays the player modal with detailed player information
 	async showPlayerModal(playerId) {
         const player = this.players.find(p => p.id === playerId);
         if (!player) return;
@@ -690,20 +690,20 @@ class NHLPlayerTiers {
 		}, {
 			label: 'Career Plus/Minus',
 			value: (player.career && player.career.plusMinus) || player.plusMinus
-		}, {
-			label: 'PIM',
+        }, {
+            label: 'PIM',
 			value: (player.career && player.career.pim) || player.pim
-		}, {
-			label: 'Hits',
+        }, {
+            label: 'Hits',
 			value: (player.career && player.career.hits) || player.hits
-		}, {
-			label: 'Blocked Shots',
+        }, {
+            label: 'Blocked Shots',
 			value: (player.career && player.career.blocked) || player.blocked
-		}, {
-			label: 'Takeaways',
+        }, {
+            label: 'Takeaways',
 			value: (player.career && player.career.takeaways) || player.takeaways
-		}, {
-			label: 'Giveaways',
+        }, {
+            label: 'Giveaways',
 			value: (player.career && player.career.giveaways) || player.giveaways
 		}];
 
@@ -807,22 +807,75 @@ class NHLPlayerTiers {
         `).join('');
 
 		// Season by Season
-		const seasons = this.getPlayerSeasons(player);
-        document.getElementById('modalPlayerSeasons').querySelector('tbody').innerHTML = seasons.map(season => `
-            <tr>
-                <td>${season.year}</td>
-                <td>${season.team}</td>
-                <td>${season.gp}</td>
-                <td>${season.g}</td>
-                <td>${season.a}</td>
-                <td>${season.p}</td>
-                <td>${season.plusMinus}</td>
-                <td>${season.pim}</td>
-                <td>${season.ppg}</td>
-                <td>${season.shg}</td>
-                <td>${season.gwg}</td>
-            </tr>
-        `).join('');
+		const seasonTable = document.getElementById('modalPlayerSeasons');
+        if (!seasonTable) return;
+
+        // Sort seasons by year in descending order (most recent first)
+        const sortedSeasons = player.seasons ? 
+            [...player.seasons].sort((a, b) => {
+                const yearA = parseInt(a.year.split('-')[0]);
+                const yearB = parseInt(b.year.split('-')[0]);
+                return yearB - yearA;
+            }) : [];
+
+        // Create the season rows
+        const seasonRows = sortedSeasons.map(season => {
+            const isPlayoffSeason = season.playoffGP > 0;
+            const regularSeasonRow = `
+                <tr class="regular-season">
+                    <td>${season.year}</td>
+                    <td>${season.team}</td>
+                    <td>${season.gp}</td>
+                    <td>${season.g}</td>
+                    <td>${season.a}</td>
+                    <td>${season.p}</td>
+                    <td>${season.plusMinus}</td>
+                    <td>${season.timeOnIcePerGame || '-'}</td>
+                    <td>${season.ppg || 0}</td>
+                    <td>${season.shg || 0}</td>
+                    <td>${season.faceOffPct ? season.faceOffPct + '%' : '-'}</td>
+                </tr>`;
+
+            const playoffRow = isPlayoffSeason ? `
+                <tr class="playoff-season">
+                    <td>${season.year} Playoffs</td>
+                    <td>${season.team}</td>
+                    <td>${season.playoffGP}</td>
+                    <td>${season.playoffG}</td>
+                    <td>${season.playoffA}</td>
+                    <td>${season.playoffP}</td>
+                    <td>${season.playoffPlusMinus || '-'}</td>
+                    <td>${season.playoffTimeOnIcePerGame || '-'}</td>
+                    <td>${season.playoffPPG || 0}</td>
+                    <td>${season.playoffSHG || 0}</td>
+                    <td>${season.playoffFaceOffPct ? season.playoffFaceOffPct + '%' : '-'}</td>
+                </tr>` : '';
+
+            return regularSeasonRow + playoffRow;
+        }).join('');
+
+        // Add career totals if available
+        let careerRow = '';
+        if (player.career) {
+            const career = player.career;
+            careerRow = `
+                <tr class="career-totals">
+                    <td>Career Totals</td>
+                    <td>-</td>
+                    <td>${career.games}</td>
+                    <td>${career.goals}</td>
+                    <td>${career.assists}</td>
+                    <td>${career.points}</td>
+                    <td>${career.plusMinus}</td>
+                    <td>-</td>
+                    <td>${career.ppg || 0}</td>
+                    <td>${career.shg || 0}</td>
+                    <td>-</td>
+                </tr>`;
+        }
+
+        // Update the table
+        seasonTable.querySelector('tbody').innerHTML = seasonRows + careerRow;
 
         // Show modal
         document.getElementById('playerModal').style.display = 'block';
@@ -1105,6 +1158,12 @@ class PlayerPredictor {
         return Math.min(1.25, gamesPlayed >= fullSeason ? 1.0 : (fullSeason / Math.max(1, gamesPlayed)));
     }
 
+    // Calculate points per game with minimum games threshold
+    calculatePointsPerGame(points, gamesPlayed, minGames = 20) {
+        if (gamesPlayed < minGames) return null;
+        return gamesPlayed > 0 ? points / gamesPlayed : 0;
+    }
+
     // Calculate weighted points per game trend
     calculatePointsPerGameTrend(seasons, maxSeasons = 3) {
         if (!seasons || seasons.length === 0) return null;
@@ -1116,13 +1175,17 @@ class PlayerPredictor {
 
         // Calculate weighted ppg for each season
         const weightedTrends = recentSeasons.map((season, index) => {
-            const ppg = season.gp > 0 ? season.p / season.gp : 0;
+            const ppg = this.calculatePointsPerGame(season.p, season.gp);
+            if (ppg === null) return null;
+            
             const weight = (index + 1) / recentSeasons.length; // More recent seasons weighted higher
+            const playoffPpg = this.calculatePointsPerGame(season.playoffP, season.playoffGP, 5); // Lower minimum for playoffs
+            
             return {
                 ppg,
                 weight,
                 gp: season.gp,
-                playoffPpg: season.playoffGP > 0 ? season.playoffP / season.playoffGP : 0
+                playoffPpg
             };
         });
 
@@ -1192,16 +1255,16 @@ class PlayerPredictor {
         const basePoints = player.currentSeasonPoints;
         const gamesPlayed = player.gamesPlayed;
 
+        // Calculate points per game trend first (used by multiple factors)
+        const trend = this.calculatePointsPerGameTrend(player.seasons);
+        const trendPoints = trend ? Math.round(trend * 82) : null;
+
         // Calculate various factors
         const ageFactor = this.getAgeFactor(parseInt(player.age) || 25);
         const positionFactor = this.getPositionFactor(player.position);
         const gamesPlayedFactor = this.getGamesPlayedFactor(gamesPlayed);
         const consistencyFactor = this.getConsistencyFactor(player);
-        const trendFactor = this.getTrendFactor(player);
-
-        // Calculate points per game trend
-        const trend = this.calculatePointsPerGameTrend(player.seasons);
-        const trendPoints = trend ? Math.round(trend * 82) : null;
+        const trendFactor = trend ? this.getTrendFactor(player) : 1.0;
 
         // Calculate base prediction adjusted for 82 games
         let adjustedBasePoints;
@@ -1254,26 +1317,42 @@ class PlayerPredictor {
 
     // Calculate prediction confidence (0-1)
     calculateConfidence(player) {
-        let confidence = 0.5; // Start at 50%
+        let confidence = 0.4; // Start at 40%
 
-        // Age factor
-        if (player.age && player.age >= 22 && player.age <= 32) {
-            confidence += 0.1; // More confident in prime-age players
+        // Age factor (0-15%)
+        if (player.age) {
+            const age = parseInt(player.age);
+            if (age >= 23 && age <= 32) {
+                confidence += 0.15; // Prime age range
+            } else if (age >= 21 && age <= 34) {
+                confidence += 0.1; // Near prime
+            } else {
+                confidence += 0.05; // Outside prime
+            }
         }
 
-        // Games played factor
-        if (player.gamesPlayed >= 41) {
-            confidence += 0.1; // More confident with more games played
+        // Games played factor (0-15%)
+        const gamesPlayedConfidence = Math.min(0.15, player.gamesPlayed / 550);
+        confidence += gamesPlayedConfidence;
+
+        // Historical data factor (0-15%)
+        if (player.seasons) {
+            const seasonCount = Math.min(5, player.seasons.length);
+            confidence += (seasonCount * 0.03); // 3% per season up to 15%
         }
 
-        // Historical data factor
-        if (player.seasons && player.seasons.length > 0) {
-            confidence += 0.1; // More confident with historical data
-        }
+        // Consistency factor (0-15%)
+        const consistencyScore = this.getConsistencyFactor(player) - 1; // Normalize to 0-0.15
+        confidence += consistencyScore;
 
-        // Consistency factor
-        if (this.getConsistencyFactor(player) > 1.05) {
-            confidence += 0.1; // More confident in consistent players
+        // Trend confidence (0-10%)
+        const trend = this.calculatePointsPerGameTrend(player.seasons);
+        if (trend !== null) {
+            const currentPpg = player.gamesPlayed > 0 ? 
+                player.currentSeasonPoints / player.gamesPlayed : 0;
+            const trendDiff = Math.abs(trend - currentPpg);
+            const trendConfidence = Math.max(0, 0.1 - (trendDiff / Math.max(0.5, currentPpg)) * 0.1);
+            confidence += trendConfidence;
         }
 
         return Math.min(1, Math.max(0, confidence));

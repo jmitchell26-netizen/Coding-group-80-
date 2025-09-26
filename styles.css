@@ -622,6 +622,27 @@ body {
     color: var(--muted-foreground);
 }
 
+.seasons-table .playoff-season {
+    background: var(--accent);
+    font-style: italic;
+}
+
+.seasons-table .playoff-season:hover {
+    background: var(--accent);
+    opacity: 0.9;
+}
+
+.seasons-table .career-totals {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: bold;
+}
+
+.seasons-table .career-totals td {
+    color: var(--primary-foreground);
+    border-top: 2px solid var(--border);
+}
+
 /* Prediction Styles */
 .prediction-section {
     margin-top: 2rem;
