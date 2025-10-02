@@ -62,6 +62,12 @@ class NHLPlayerTiers {
             const allPlayers = [];
             const seen = new Set(); // to skip duplicates (Name+Team)
 
+            // Custom photo URLs for players without NHL photos
+            const customPhotos = {
+                'Tim Stützle': 'data:image/jpeg;base64,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',
+                'Lane Hutson': 'path/to/hutson.jpg'
+            };
+
             // NHL player IDs mapping (add more as needed)
             const playerIds = {
                 'Connor McDavid': '8478402',
@@ -101,7 +107,6 @@ class NHLPlayerTiers {
                 'Jake Guentzel': '8477404',
                 'Jason Robertson': '8480027',
                 'Lucas Raymond': '8482078',
-                'Tim Stützle': '8482109',
                 'Filip Forsberg': '8476887',
                 'Travis Konecny': '8478439',
                 'John Tavares': '8475166',
@@ -160,8 +165,8 @@ class NHLPlayerTiers {
                 'Jordan Greenway': '8479532',
                 'Jack Roslovic': '8478466',
                 'Michael Bunting': '8478875',
-                'Lane Hutson': '8483506',
-                'Joel Hanley': '8477803'
+                'Joel Hanley': '8477803',
+                'Ryan Donato': '8477987'
             };
 
             for (const rawLine of lines) {
@@ -198,9 +203,12 @@ class NHLPlayerTiers {
 
                 // Generate a unique ID for players without a known NHL ID
                 const playerId = playerIds[name] || `custom${rank}`;
-                const photoUrl = playerIds[name]
-                    ? `https://assets.nhle.com/mugs/nhl/latest/${playerIds[name]}.png`
-                    : `https://assets.nhle.com/mugs/nhl/latest/default.png`;
+                // Check for custom photo first, then NHL photo, then default
+                const photoUrl = customPhotos[name]
+                    ? customPhotos[name]
+                    : (playerIds[name]
+                        ? `https://assets.nhle.com/mugs/nhl/latest/${playerIds[name]}.png`
+                        : `https://assets.nhle.com/mugs/nhl/latest/default.png`);
 
                 allPlayers.push({
                     id: playerId,
